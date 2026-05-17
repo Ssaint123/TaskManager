@@ -90,6 +90,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 /* ── SECTION LABELS ──────────────────────────────────────── */
 .sec{font-size:10.5px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:var(--t2);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
 .sec-action{font-size:12px;font-weight:600;color:var(--green);letter-spacing:0;text-transform:none;cursor:pointer;}
+.sec-actions{display:flex;align-items:center;gap:12px;}
 
 /* ── RECOVERY RING ───────────────────────────────────────── */
 .ring-wrap{display:flex;flex-direction:column;align-items:center;padding:20px 0 10px;}
@@ -189,6 +190,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 .finance-amount{font-size:16px;font-weight:700;}
 .finance-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:2px 4px;}
 
+/* ── TAX & FUNDS ─────────────────────────────────────────── */
+.tax-chip-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.tax-chip{background:var(--s2);border:1.5px solid var(--border);border-radius:10px;color:var(--t2);font-size:14px;font-weight:600;padding:10px 4px;cursor:pointer;transition:all .15s;}
+.tax-chip.active{background:var(--blue-d);border-color:var(--blue);color:var(--blue);}
+.tax-chip-custom{grid-column:span 2;}
+.fund-presets{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 12px;}
+.fund-preset-chip{background:var(--s2);border:1px solid var(--border);border-radius:20px;color:var(--t2);font-size:12px;padding:6px 12px;cursor:pointer;}
+.fund-preset-chip:active{background:var(--s3);}
+.fund-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--s1);border-radius:10px;margin-bottom:6px;}
+.fund-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.fund-item-info{flex:1;}
+.fund-item-name{font-size:15px;font-weight:500;}
+.fund-item-pct{font-size:12px;color:var(--t2);}
+.fund-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:2px 4px;}
+.funds-breakdown-card{background:var(--s1);border-radius:12px;padding:14px;margin-bottom:14px;}
+.funds-breakdown-title{font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--t2);margin-bottom:10px;}
+.fund-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.fund-row:last-child{margin-bottom:0;}
+.fund-row-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.fund-row-name{flex:1;font-size:14px;font-weight:500;}
+.fund-row-pct{font-size:12px;color:var(--t2);margin-right:6px;}
+.fund-row-amt{font-size:15px;font-weight:700;}
 
 /* ── SCHEDULE ────────────────────────────────────────────── */
 .schedule-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--s1);border-radius:10px;margin-bottom:6px;}
@@ -358,7 +381,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
           <div class="finance-sum-val" id="fin-profit">$0</div>
         </div>
       </div>
-      <div class="sec">This Month <span class="sec-action" id="add-finance-btn">+ Add Entry</span></div>
+      <div class="finance-summary" id="fin-tax-row">
+        <div class="finance-sum-card">
+          <div class="finance-sum-label">Tax Est. <span id="fin-tax-rate-lbl" style="color:var(--t3);font-weight:400;"></span></div>
+          <div class="finance-sum-val" id="fin-tax" style="color:var(--orange);">$0</div>
+        </div>
+        <div class="finance-sum-card">
+          <div class="finance-sum-label">After-Tax Net</div>
+          <div class="finance-sum-val" id="fin-net">$0</div>
+        </div>
+      </div>
+      <div id="funds-breakdown"></div>
+      <div class="sec">This Month <div class="sec-actions"><span class="sec-action" id="open-tax-funds-btn" style="color:var(--t2);">⚙ Tax &amp; Funds</span><span class="sec-action" id="add-finance-btn">+ Add Entry</span></div></div>
       <div id="finance-list"></div>
       <div id="finance-empty" style="color:var(--t3);font-size:13px;text-align:center;padding:30px 0;display:none;">No entries yet</div>
     </div>
@@ -465,6 +499,64 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
       </div>
       <div class="field-group"><div class="field-label">Label</div><input class="field-input" id="f-label" type="text" placeholder="e.g. TikTok Creator Fund"></div>
       <div class="field-group"><div class="field-label">Amount ($)</div><input class="field-input" id="f-amount" type="number" step="0.01" placeholder="0.00"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Tax & Funds Settings -->
+<div class="overlay" id="overlay-taxfunds">
+  <div class="overlay-bg"></div>
+  <div class="sheet">
+    <div class="sheet-header">
+      <button class="sheet-cancel" data-close="overlay-taxfunds">Cancel</button>
+      <div class="sheet-title">Tax &amp; Funds</div>
+      <button class="sheet-save" id="save-taxfunds-btn">Save</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field-label" style="margin-bottom:10px;">Tax Rate (applied to income)</div>
+      <div class="tax-chip-grid" id="tax-chip-grid">
+        <button class="tax-chip" data-rate="0">None</button>
+        <button class="tax-chip" data-rate="10">10%</button>
+        <button class="tax-chip" data-rate="15">15%</button>
+        <button class="tax-chip" data-rate="20">20%</button>
+        <button class="tax-chip" data-rate="25">25%</button>
+        <button class="tax-chip" data-rate="30">30%</button>
+        <button class="tax-chip" data-rate="35">35%</button>
+        <button class="tax-chip tax-chip-custom" data-rate="custom">Custom</button>
+      </div>
+      <div id="tax-custom-wrap" style="display:none;margin-top:10px;">
+        <input class="field-input" id="tax-custom-val" type="number" min="0" max="100" placeholder="Enter % e.g. 27">
+      </div>
+
+      <div style="margin-top:22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div class="field-label">Funds &amp; Donations</div>
+          <button class="sec-action" id="add-fund-btn" style="font-size:13px;">+ Add Fund</button>
+        </div>
+        <div id="funds-list-settings"></div>
+        <div id="funds-settings-empty" style="color:var(--t3);font-size:13px;padding:8px 0;">No funds yet — add one above.</div>
+        <div id="add-fund-form" style="display:none;background:var(--s2);border-radius:12px;padding:14px;margin-top:10px;">
+          <div class="field-group"><div class="field-label">Name</div><input class="field-input" id="fund-name" type="text" placeholder="e.g. Tithe, Zakat, Emergency Fund"></div>
+          <div class="fund-presets" id="fund-name-presets">
+            <button class="fund-preset-chip" data-name="Tithe" data-pct="10">🙏 Tithe 10%</button>
+            <button class="fund-preset-chip" data-name="Savings" data-pct="20">🏦 Savings 20%</button>
+            <button class="fund-preset-chip" data-name="Emergency" data-pct="10">🛟 Emergency 10%</button>
+          </div>
+          <div class="row-2">
+            <div class="field-group"><div class="field-label">% of Income</div><input class="field-input" id="fund-pct" type="number" min="0" max="100" step="0.1" placeholder="e.g. 10"></div>
+            <div class="field-group"><div class="field-label">Color</div>
+              <select class="field-select" id="fund-color">
+                <option value="var(--gold)">Gold</option>
+                <option value="var(--green)">Green</option>
+                <option value="var(--blue)">Blue</option>
+                <option value="var(--orange)">Orange</option>
+                <option value="var(--red)">Red</option>
+              </select>
+            </div>
+          </div>
+          <button class="sheet-save" id="confirm-add-fund-btn" style="width:100%;margin-top:4px;">Add Fund</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -772,6 +864,8 @@ function defaultState() {
     lastGoalDate: null,
     brands: [],
     finances: [],
+    taxRate: 0,
+    funds: [],
     schedule: [],
     notifPrefs: { enabled: false, morning: '08:00', midday: '12:00', evening: '20:00' },
     hiddenTabs: [],
@@ -1031,7 +1125,8 @@ function deleteBrand(id) {
 // ─── RENDER FINANCES ──────────────────────────────────────
 function renderFinances() {
   const m = new Date().getMonth();
-  const entries = S.finances.filter(e=>{ const d=new Date(e.date); return d.getMonth()===m; });
+  const yr = new Date().getFullYear();
+  const entries = S.finances.filter(e=>{ const d=new Date(e.date); return d.getMonth()===m && d.getFullYear()===yr; });
   const income = entries.filter(e=>e.type==='income').reduce((a,e)=>a+Number(e.amount),0);
   const expense = entries.filter(e=>e.type==='expense').reduce((a,e)=>a+Number(e.amount),0);
   const profit = income-expense;
@@ -1041,6 +1136,38 @@ function renderFinances() {
   const profEl = document.getElementById('fin-profit');
   profEl.textContent = (profit>=0?'+$':'-$')+Math.abs(profit).toFixed(2);
   profEl.style.color = profit>=0?'var(--green)':'var(--red)';
+
+  // Tax calculation
+  const taxRate = Number(S.taxRate)||0;
+  const taxOwed = income * (taxRate/100);
+  const afterTax = income - taxOwed - expense;
+  const taxRow = document.getElementById('fin-tax-row');
+  taxRow.style.display = taxRate > 0 ? 'flex' : 'none';
+  document.getElementById('fin-tax').textContent = '$'+taxOwed.toFixed(2);
+  document.getElementById('fin-tax-rate-lbl').textContent = taxRate > 0 ? taxRate+'%' : '';
+  const netEl = document.getElementById('fin-net');
+  netEl.textContent = (afterTax>=0?'$':'-$')+Math.abs(afterTax).toFixed(2);
+  netEl.style.color = afterTax>=0?'var(--green)':'var(--red)';
+
+  // Funds breakdown
+  const fundsEl = document.getElementById('funds-breakdown');
+  const funds = S.funds||[];
+  if (funds.length && income > 0) {
+    fundsEl.innerHTML = `<div class="funds-breakdown-card">
+      <div class="funds-breakdown-title">Fund Allocations — This Month</div>
+      ${funds.map(f=>{
+        const amt = income * (Number(f.percent)/100);
+        return `<div class="fund-row">
+          <div class="fund-row-dot" style="background:${f.color||'var(--gold)'}"></div>
+          <div class="fund-row-name">${escHtml(f.name)}</div>
+          <div class="fund-row-pct">${f.percent}%</div>
+          <div class="fund-row-amt" style="color:${f.color||'var(--gold)'}">$${amt.toFixed(2)}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  } else {
+    fundsEl.innerHTML = '';
+  }
 
   const list = document.getElementById('finance-list');
   const empty = document.getElementById('finance-empty');
@@ -1059,6 +1186,121 @@ function renderFinances() {
       <button class="finance-del" data-fin-del="${e.id}">×</button>
     </div>`).join('');
 }
+
+// ─── TAX & FUNDS SETTINGS ─────────────────────────────────
+let _taxChipSelected = 0; // current rate while overlay is open
+
+function openTaxFunds() {
+  _taxChipSelected = Number(S.taxRate)||0;
+  // Mark active chip
+  document.querySelectorAll('.tax-chip').forEach(btn=>{
+    const r = btn.dataset.rate;
+    const isCustom = r === 'custom';
+    const rateMatch = !isCustom && Number(r) === _taxChipSelected;
+    const knownRates = [0,10,15,20,25,30,35];
+    const isCustomActive = isCustom && !knownRates.includes(_taxChipSelected);
+    btn.classList.toggle('active', rateMatch || isCustomActive);
+  });
+  const customWrap = document.getElementById('tax-custom-wrap');
+  const knownRates = [0,10,15,20,25,30,35];
+  if (!knownRates.includes(_taxChipSelected)) {
+    customWrap.style.display='block';
+    document.getElementById('tax-custom-val').value = _taxChipSelected||'';
+  } else {
+    customWrap.style.display='none';
+  }
+  renderFundsSettings();
+  document.getElementById('add-fund-form').style.display='none';
+  openOverlay('overlay-taxfunds');
+}
+
+function renderFundsSettings() {
+  const funds = S.funds||[];
+  const el = document.getElementById('funds-list-settings');
+  const empty = document.getElementById('funds-settings-empty');
+  empty.style.display = funds.length ? 'none' : 'block';
+  el.innerHTML = funds.map(f=>`
+    <div class="fund-item">
+      <div class="fund-dot" style="background:${f.color||'var(--gold)'}"></div>
+      <div class="fund-item-info">
+        <div class="fund-item-name">${escHtml(f.name)}</div>
+        <div class="fund-item-pct">${f.percent}% of income</div>
+      </div>
+      <button class="fund-del" data-fund-del="${f.id}">×</button>
+    </div>`).join('');
+}
+
+// Tax chip clicks
+document.getElementById('tax-chip-grid').addEventListener('click', e=>{
+  const chip = e.target.closest('.tax-chip');
+  if (!chip) return;
+  document.querySelectorAll('.tax-chip').forEach(b=>b.classList.remove('active'));
+  chip.classList.add('active');
+  const customWrap = document.getElementById('tax-custom-wrap');
+  if (chip.dataset.rate === 'custom') {
+    customWrap.style.display='block';
+    document.getElementById('tax-custom-val').focus();
+  } else {
+    customWrap.style.display='none';
+    _taxChipSelected = Number(chip.dataset.rate);
+  }
+});
+
+// Fund preset chips
+document.getElementById('fund-name-presets').addEventListener('click', e=>{
+  const chip = e.target.closest('.fund-preset-chip');
+  if (!chip) return;
+  document.getElementById('fund-name').value = chip.dataset.name;
+  document.getElementById('fund-pct').value = chip.dataset.pct;
+});
+
+// Add fund form toggle
+document.getElementById('add-fund-btn').addEventListener('click', ()=>{
+  const form = document.getElementById('add-fund-form');
+  form.style.display = form.style.display==='none' ? 'block' : 'none';
+  if (form.style.display==='block') {
+    document.getElementById('fund-name').value='';
+    document.getElementById('fund-pct').value='';
+    document.getElementById('fund-color').value='var(--gold)';
+  }
+});
+
+// Confirm add fund
+document.getElementById('confirm-add-fund-btn').addEventListener('click', ()=>{
+  const name = document.getElementById('fund-name').value.trim();
+  const pct = parseFloat(document.getElementById('fund-pct').value);
+  const color = document.getElementById('fund-color').value;
+  if (!name || isNaN(pct) || pct<=0) return;
+  if (!S.funds) S.funds=[];
+  S.funds.push({ id:uid(), name, percent:pct, color });
+  save();
+  document.getElementById('add-fund-form').style.display='none';
+  renderFundsSettings();
+});
+
+// Delete fund
+document.getElementById('funds-list-settings').addEventListener('click', e=>{
+  const del = e.target.closest('[data-fund-del]');
+  if (!del) return;
+  S.funds = (S.funds||[]).filter(f=>f.id!==del.dataset.fundDel);
+  save(); renderFundsSettings();
+});
+
+// Save tax & funds
+document.getElementById('save-taxfunds-btn').addEventListener('click', ()=>{
+  const activeChip = document.querySelector('.tax-chip.active');
+  if (activeChip) {
+    if (activeChip.dataset.rate === 'custom') {
+      const v = parseFloat(document.getElementById('tax-custom-val').value);
+      S.taxRate = isNaN(v) ? 0 : Math.min(100, Math.max(0, v));
+    } else {
+      S.taxRate = Number(activeChip.dataset.rate);
+    }
+  }
+  save(); closeOverlay('overlay-taxfunds'); renderFinances();
+});
+
+document.getElementById('open-tax-funds-btn').addEventListener('click', openTaxFunds);
 
 // ─── RENDER SCHEDULE ──────────────────────────────────────
 function renderSchedule() {
