@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Dashboard">
+  <title>My Dashboard</title>
+<style>
+/* ── RESET & TOKENS ─────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0b0b10;
+  --s1:#13131c;
+  --s2:#1a1a26;
+  --s3:#22222f;
+  --border:rgba(255,255,255,0.07);
+  --t1:#ededf5;
+  --t2:#7a7a96;
+  --t3:#3a3a55;
+  --green:#00e87a;
+  --green-d:rgba(0,232,122,0.12);
+  --orange:#ff9a00;
+  --orange-d:rgba(255,154,0,0.12);
+  --red:#ff3f3f;
+  --red-d:rgba(255,63,63,0.12);
+  --gold:#c9a96e;
+  --gold-d:rgba(201,169,110,0.12);
+  --blue:#5b8cff;
+  --blue-d:rgba(91,140,255,0.12);
+  --nav-h:64px;
+  --header-h:64px;
+  --radius:14px;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;color:var(--t1);-webkit-user-select:none;user-select:none;}
+
+/* ── LAYOUT ─────────────────────────────────────────────── */
+#app{height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+#header{
+  height:calc(var(--header-h) + env(safe-area-inset-top));
+  padding-top:env(safe-area-inset-top);
+  padding:calc(env(safe-area-inset-top) + 12px) 20px 12px;
+  background:var(--bg);
+  border-bottom:0.5px solid var(--border);
+  flex-shrink:0;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:8px;
+}
+#header-left{display:flex;flex-direction:column;gap:1px;}
+#header-title{font-size:20px;font-weight:700;letter-spacing:-0.5px;}
+#header-sub{font-size:11px;color:var(--t2);letter-spacing:0.8px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+#day-type-btn{background:var(--s2);border:none;color:var(--t2);font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;padding:3px 8px;border-radius:20px;cursor:pointer;}
+#header-right{display:flex;align-items:center;gap:10px;}
+.header-icon-btn{width:32px;height:32px;border-radius:50%;background:var(--s2);border:none;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.header-icon-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+#views{flex:1;overflow:hidden;position:relative;}
+.view{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px);display:none;}
+.view.active{display:block;}
+#bottom-nav{height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:var(--s1);border-top:0.5px solid var(--border);display:flex;align-items:stretch;flex-shrink:0;}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:var(--t3);font-size:10px;font-weight:600;letter-spacing:0.4px;cursor:pointer;transition:color .2s;}
+.nav-tab.active{color:var(--green);}
+.nav-tab svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s;}
+
+/* ── SETUP ───────────────────────────────────────────────── */
+#setup{position:absolute;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 32px;gap:28px;}
+#setup h1{font-size:28px;font-weight:800;letter-spacing:-1px;text-align:center;}
+#setup p{color:var(--t2);text-align:center;font-size:15px;line-height:1.5;}
+.setup-input{width:100%;background:var(--s2);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px 18px;font-size:17px;font-family:inherit;color:var(--t1);outline:none;}
+.setup-input::placeholder{color:var(--t3);}
+.btn-primary{width:100%;padding:16px;background:var(--green);border:none;border-radius:var(--radius);font-size:16px;font-weight:700;color:#000;cursor:pointer;letter-spacing:-0.2px;}
+.btn-primary:active{opacity:.85;}
+
+/* ── CARDS ───────────────────────────────────────────────── */
+.card{background:var(--s1);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;}
+.card-row{display:flex;gap:10px;margin-bottom:10px;}
+.card-row .card{flex:1;margin-bottom:0;}
+.card-sm{background:var(--s2);border-radius:10px;padding:13px 14px;}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;padding:4px 9px;border-radius:20px;}
+.chip-green{background:var(--green-d);color:var(--green);}
+.chip-gold{background:var(--gold-d);color:var(--gold);}
+.chip-orange{background:var(--orange-d);color:var(--orange);}
+.chip-red{background:var(--red-d);color:var(--red);}
+.chip-blue{background:var(--blue-d);color:var(--blue);}
+
+/* ── SECTION LABELS ──────────────────────────────────────── */
+.sec{font-size:10.5px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:var(--t2);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.sec-action{font-size:12px;font-weight:600;color:var(--green);letter-spacing:0;text-transform:none;cursor:pointer;}
+
+/* ── RECOVERY RING ───────────────────────────────────────── */
+.ring-wrap{display:flex;flex-direction:column;align-items:center;padding:20px 0 10px;}
+.ring-svg{width:200px;height:200px;}
+.ring-track{fill:none;stroke:var(--s3);stroke-width:14;stroke-linecap:round;}
+.ring-progress{fill:none;stroke-width:14;stroke-linecap:round;transform-origin:center;transform:rotate(-90deg);transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1),stroke .4s;}
+.ring-inner{position:relative;width:200px;margin-top:-200px;display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:2px;}
+.ring-score{font-size:64px;font-weight:800;letter-spacing:-3px;line-height:1;}
+.ring-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t2);}
+.ring-status{font-size:13px;font-weight:600;margin-top:8px;}
+
+/* ── SLEEP BAR ───────────────────────────────────────────── */
+.sleep-bar{height:10px;border-radius:5px;display:flex;overflow:hidden;margin:10px 0;}
+.sleep-seg{height:100%;}
+.sleep-legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:13px;}
+.sleep-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sleep-row{display:flex;align-items:center;gap:6px;}
+.sleep-val{margin-left:auto;color:var(--t2);font-variant-numeric:tabular-nums;}
+
+/* ── HEALTH GRID ─────────────────────────────────────────── */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.stat-card{background:var(--s2);border-radius:12px;padding:14px;}
+.stat-label{font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:var(--t2);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.stat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot-green{background:var(--green);}
+.dot-gray{background:#555;}
+.dot-orange{background:var(--orange);}
+.dot-red{background:var(--red);}
+.stat-val{font-size:32px;font-weight:800;letter-spacing:-1.5px;line-height:1;}
+.stat-sub{font-size:12px;color:var(--t2);margin-top:3px;}
+.stat-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
+.stat-card-sm{background:var(--s2);border-radius:12px;padding:12px;}
+.stat-val-sm{font-size:20px;font-weight:700;letter-spacing:-0.5px;}
+
+/* ── GOALMAXXING ─────────────────────────────────────────── */
+.goal-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+.goal-date{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:4px;}
+.goal-counter{display:flex;align-items:baseline;gap:6px;}
+.goal-count-n{font-size:48px;font-weight:900;letter-spacing:-2px;line-height:1;color:var(--t1);}
+.goal-count-total{font-size:16px;font-weight:600;color:var(--t2);}
+.streak-badge{display:flex;align-items:center;gap:5px;background:var(--orange-d);color:var(--orange);font-size:11px;font-weight:700;letter-spacing:0.5px;padding:6px 11px;border-radius:20px;}
+.goal-list{display:flex;flex-direction:column;gap:1px;}
+.goal-item{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;background:var(--s1);border-radius:10px;margin-bottom:6px;position:relative;overflow:hidden;}
+.goal-item.done .goal-text{color:var(--t2);text-decoration:line-through;}
+.goal-check{width:22px;height:22px;min-width:22px;border-radius:50%;border:1.5px solid var(--t3);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .2s;}
+.goal-check.done{background:var(--green);border-color:var(--green);}
+.goal-check.done::after{content:'';width:5px;height:9px;border:2px solid #000;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px);display:block;}
+.goal-text{font-size:15px;line-height:1.4;flex:1;word-break:break-word;}
+.goal-del{background:none;border:none;color:var(--t3);cursor:pointer;padding:2px 4px;font-size:18px;flex-shrink:0;line-height:1;}
+.goal-add-row{display:flex;gap:8px;margin-top:8px;}
+.goal-input{flex:1;background:var(--s2);border:0.5px solid var(--border);border-radius:10px;padding:13px 14px;font-size:15px;font-family:inherit;color:var(--t1);outline:none;}
+.goal-input::placeholder{color:var(--t3);}
+.goal-add-btn{background:var(--green);border:none;border-radius:10px;padding:0 16px;font-size:22px;color:#000;cursor:pointer;font-weight:300;}
+
+/* ── BRAND ───────────────────────────────────────────────── */
+.brand-card{background:var(--s1);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;}
+.brand-card-top{padding:16px;}
+.brand-name{font-size:18px;font-weight:700;letter-spacing:-0.5px;margin-bottom:3px;}
+.brand-desc{font-size:13px;color:var(--t2);line-height:1.4;margin-bottom:12px;}
+.platforms{display:flex;gap:8px;flex-wrap:wrap;}
+.platform-card{flex:1;min-width:80px;background:var(--s2);border-radius:10px;padding:10px 12px;}
+.platform-name{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--t2);margin-bottom:5px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.platform-count{font-size:22px;font-weight:800;letter-spacing:-0.8px;}
+.platform-unit{font-size:11px;color:var(--t2);}
+.brand-ops{background:var(--s2);border-top:0.5px solid var(--border);}
+.brand-ops-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.ops-cell{padding:12px 14px;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border);}
+.ops-cell:nth-child(even){border-right:none;}
+.ops-cell:nth-last-child(-n+2){border-bottom:none;}
+.ops-label{font-size:9.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:4px;}
+.ops-val{font-size:14px;font-weight:600;}
+.ops-sub{font-size:11px;color:var(--t2);}
+.brand-profit{padding:14px 16px;border-top:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.profit-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t2);}
+.profit-val{font-size:28px;font-weight:900;letter-spacing:-1px;}
+.profit-pos{color:var(--green);}
+.profit-neg{color:var(--red);}
+
+/* ── REFLECTION ──────────────────────────────────────────── */
+.reflection-wrap{padding:14px 16px;border-top:0.5px solid var(--border);}
+.reflection-q{font-size:12px;color:var(--t2);margin-bottom:8px;}
+.reflection-ta{width:100%;background:var(--s3);border:none;border-radius:10px;padding:12px;font-size:14px;font-family:inherit;color:var(--t1);min-height:90px;outline:none;resize:none;line-height:1.5;}
+.reflection-ta::placeholder{color:var(--t3);}
+.reflection-save{margin-top:8px;float:right;background:var(--gold);border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;color:#000;cursor:pointer;}
+
+/* ── FINANCES ────────────────────────────────────────────── */
+.finance-summary{display:flex;gap:10px;margin-bottom:14px;}
+.finance-sum-card{flex:1;background:var(--s2);border-radius:12px;padding:14px;}
+.finance-sum-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:6px;}
+.finance-sum-val{font-size:26px;font-weight:800;letter-spacing:-1px;}
+.finance-entry{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--s1);border-radius:10px;margin-bottom:6px;}
+.finance-type-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.finance-info{flex:1;}
+.finance-entry-label{font-size:15px;font-weight:500;}
+.finance-entry-date{font-size:12px;color:var(--t2);}
+.finance-amount{font-size:16px;font-weight:700;}
+.finance-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:2px 4px;}
+
+
+/* ── SCHEDULE ────────────────────────────────────────────── */
+.schedule-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--s1);border-radius:10px;margin-bottom:6px;}
+.sched-color{width:4px;height:40px;border-radius:2px;flex-shrink:0;}
+.sched-info{flex:1;}
+.sched-label{font-size:15px;font-weight:600;margin-bottom:2px;}
+.sched-time{font-size:12px;color:var(--t2);}
+.sched-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;}
+
+/* ── MODALS ──────────────────────────────────────────────── */
+.overlay{position:fixed;inset:0;z-index:500;display:none;}
+.overlay.open{display:block;}
+.overlay-bg{position:absolute;inset:0;background:rgba(0,0,0,.6);}
+.sheet{position:absolute;bottom:0;left:0;right:0;background:var(--s1);border-radius:20px 20px 0 0;padding-bottom:max(env(safe-area-inset-bottom),20px);animation:slideUp .3s cubic-bezier(.32,.72,0,1);}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 12px;border-bottom:0.5px solid var(--border);}
+.sheet-title{font-size:17px;font-weight:700;}
+.sheet-cancel{background:none;border:none;color:var(--t2);font-size:16px;cursor:pointer;}
+.sheet-save{background:none;border:none;color:var(--green);font-size:16px;font-weight:700;cursor:pointer;}
+.sheet-body{padding:16px 20px;display:flex;flex-direction:column;gap:14px;max-height:70vh;overflow-y:auto;}
+.field-label{font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--t2);margin-bottom:6px;}
+.field-input{width:100%;background:var(--s2);border:0.5px solid var(--border);border-radius:10px;padding:13px 14px;font-size:15px;font-family:inherit;color:var(--t1);outline:none;}
+.field-input::placeholder{color:var(--t3);}
+.field-select{width:100%;background:var(--s2);border:0.5px solid var(--border);border-radius:10px;padding:13px 14px;font-size:15px;font-family:inherit;color:var(--t1);outline:none;-webkit-appearance:none;}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.field-group{display:flex;flex-direction:column;}
+.legend{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--t2);margin-top:10px;}
+.legend-item{display:flex;align-items:center;gap:5px;}
+
+/* ── TAB TOGGLE BUTTONS ──────────────────────────────────── */
+.tab-toggle-btn{padding:11px 10px;border-radius:10px;border:0.5px solid var(--border);background:var(--s2);color:var(--t2);font-size:13px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s;}
+.tab-toggle-btn.on{background:var(--green-d);border-color:var(--green);color:var(--green);}
+
+/* ── ADD BRAND PLATFORM LIST ─────────────────────────────── */
+.plat-list{display:flex;flex-direction:column;gap:8px;}
+.plat-row{display:flex;gap:6px;align-items:center;}
+.plat-row .field-input{flex:1;}
+.plat-del-btn{background:var(--red-d);border:none;color:var(--red);border-radius:8px;width:36px;height:44px;font-size:18px;cursor:pointer;}
+.add-plat-btn{background:none;border:0.5px dashed var(--t3);border-radius:10px;padding:10px;width:100%;color:var(--t2);font-size:13px;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── SETUP ─────────────────────────────────────────── -->
+  <div id="setup">
+    <div style="font-size:48px">⚡</div>
+    <h1>Your personal<br>operating system.</h1>
+    <p>Track health, goals, brands, and finances — all in one place.</p>
+    <input class="setup-input" id="setup-name" type="text" placeholder="Your first name" maxlength="24">
+    <button class="btn-primary" id="setup-btn">Get started</button>
+  </div>
+
+  <!-- ── HEADER ────────────────────────────────────────── -->
+  <div id="header" style="display:none">
+    <div id="header-left">
+      <div id="header-title">Dashboard</div>
+      <div id="header-sub">
+        <span id="header-date"></span>
+        <button id="day-type-btn">FULL DAY</button>
+      </div>
+    </div>
+    <div id="header-right">
+      <button class="header-icon-btn" id="settings-btn" title="Settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── VIEWS ─────────────────────────────────────────── -->
+  <div id="views" style="display:none">
+
+    <!-- MAIN -->
+    <div class="view active" id="view-main">
+      <div class="ring-wrap" id="main-ring-wrap">
+        <svg class="ring-svg" viewBox="0 0 200 200">
+          <circle class="ring-track" cx="100" cy="100" r="80"/>
+          <circle class="ring-progress" id="main-ring" cx="100" cy="100" r="80" stroke-dasharray="502.65" stroke-dashoffset="502.65"/>
+        </svg>
+        <div class="ring-inner">
+          <div class="ring-score" id="main-score">—</div>
+          <div class="ring-label">Recovery</div>
+        </div>
+        <div class="ring-status" id="main-ring-status"></div>
+      </div>
+
+      <div class="card" id="main-schedule-card">
+        <div class="sec">Schedule <span class="sec-action" id="add-sched-btn">+ Add</span></div>
+        <div id="schedule-list"></div>
+        <div id="schedule-empty" style="color:var(--t3);font-size:13px;text-align:center;padding:10px 0;">No blocks yet — tap + Add</div>
+      </div>
+
+<div class="card" id="main-goals-preview">
+        <div class="sec">Goalmaxxing <span class="sec-action" id="main-goto-goals">View all</span></div>
+        <div id="main-goals-list"></div>
+      </div>
+    </div>
+
+    <!-- HEALTH -->
+    <div class="view" id="view-health">
+      <div class="card">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:-8px;"><button class="chip chip-blue" id="edit-health-btn">Edit Metrics</button></div>
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 200 200">
+            <circle class="ring-track" cx="100" cy="100" r="80"/>
+            <circle class="ring-progress" id="health-ring" cx="100" cy="100" r="80" stroke-dasharray="502.65" stroke-dashoffset="502.65"/>
+          </svg>
+          <div class="ring-inner">
+            <div class="ring-score" id="health-score">—</div>
+            <div class="ring-label">Recovery</div>
+          </div>
+          <div class="ring-status" id="health-ring-status"></div>
+        </div>
+        <div style="margin-top:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+            <div class="sec" style="margin:0;">Sleep Stages</div>
+            <div style="font-size:12px;color:var(--t2);" id="sleep-total"></div>
+          </div>
+          <div class="sleep-bar" id="sleep-bar"></div>
+          <div class="sleep-legend" id="sleep-legend"></div>
+        </div>
+      </div>
+
+      <div class="stat-grid" id="stat-grid-main"></div>
+      <div class="stat-grid-3" id="stat-grid-bottom"></div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="stat-dot dot-green"></span>Good</div>
+        <div class="legend-item"><span class="stat-dot dot-gray"></span>Normal</div>
+        <div class="legend-item"><span class="stat-dot dot-orange"></span>Watch</div>
+        <div class="legend-item"><span class="stat-dot dot-red"></span>High / Low</div>
+      </div>
+    </div>
+
+    <!-- GOALS -->
+    <div class="view" id="view-goals">
+      <div class="card">
+        <div class="sec" style="letter-spacing:2px;font-size:12px;color:var(--orange);">⚡ Goalmaxxing</div>
+        <div class="goal-header">
+          <div>
+            <div class="goal-date" id="goal-date"></div>
+            <div class="goal-counter">
+              <div class="goal-count-n" id="goal-count-done">0</div>
+              <div class="goal-count-total" id="goal-count-total">/ 0 complete</div>
+            </div>
+          </div>
+          <div class="streak-badge" id="streak-badge">⚡ 0 day streak</div>
+        </div>
+        <div class="goal-list" id="goal-list"></div>
+        <div class="goal-add-row">
+          <input class="goal-input" id="goal-input" type="text" placeholder="Add a goal...">
+          <button class="goal-add-btn" id="goal-add-btn">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BRAND -->
+    <div class="view" id="view-brand">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+        <button class="chip chip-gold" id="add-brand-btn">+ Add Brand</button>
+      </div>
+      <div id="brand-list"></div>
+      <div id="brand-empty" style="color:var(--t3);font-size:14px;text-align:center;padding:40px 0;display:none;">No brands yet — tap + Add Brand</div>
+    </div>
+
+    <!-- FINANCES -->
+    <div class="view" id="view-finances">
+      <div class="finance-summary">
+        <div class="finance-sum-card">
+          <div class="finance-sum-label">Income</div>
+          <div class="finance-sum-val" id="fin-income" style="color:var(--green);">$0</div>
+        </div>
+        <div class="finance-sum-card">
+          <div class="finance-sum-label">Expenses</div>
+          <div class="finance-sum-val" id="fin-expense" style="color:var(--red);">$0</div>
+        </div>
+        <div class="finance-sum-card">
+          <div class="finance-sum-label">Profit</div>
+          <div class="finance-sum-val" id="fin-profit">$0</div>
+        </div>
+      </div>
+      <div class="sec">This Month <span class="sec-action" id="add-finance-btn">+ Add Entry</span></div>
+      <div id="finance-list"></div>
+      <div id="finance-empty" style="color:var(--t3);font-size:13px;text-align:center;padding:30px 0;display:none;">No entries yet</div>
+    </div>
+
+  </div><!-- /views -->
+
+  <!-- ── BOTTOM NAV ─────────────────────────────────────── -->
+  <nav id="bottom-nav" style="display:none">
+    <button class="nav-tab active" data-view="main">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Main
+    </button>
+    <button class="nav-tab" data-view="finances">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h4.5a1.5 1.5 0 010 3h-3a1.5 1.5 0 000 3H15"/></svg>Finances
+    </button>
+    <button class="nav-tab" data-view="brand">
+      <svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>Brand
+    </button>
+    <button class="nav-tab" data-view="health">
+      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Health
+    </button>
+    <button class="nav-tab" data-view="goals">
+      <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Goals
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- ── MODALS ─────────────────────────────────────────────── -->
+
+<!-- Health Edit -->
+<div class="overlay" id="overlay-health">
+  <div class="overlay-bg"></div>
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-cancel" data-close="overlay-health">Cancel</button><div class="sheet-title">Edit Metrics</div><button class="sheet-save" id="save-health-btn">Save</button></div>
+    <div class="sheet-body">
+      <div class="field-group"><div class="field-label">Recovery Score (0–100)</div><input class="field-input" id="h-recovery" type="number" min="0" max="100" placeholder="81"></div>
+      <div class="row-2">
+        <div class="field-group"><div class="field-label">HRV (ms)</div><input class="field-input" id="h-hrv" type="number" placeholder="115"></div>
+        <div class="field-group"><div class="field-label">RHR (bpm)</div><input class="field-input" id="h-rhr" type="number" placeholder="45"></div>
+      </div>
+      <div class="row-2">
+        <div class="field-group"><div class="field-label">Sleep Score (%)</div><input class="field-input" id="h-sleep-score" type="number" min="0" max="100" placeholder="82"></div>
+        <div class="field-group"><div class="field-label">Sleep Hours</div><input class="field-input" id="h-sleep-hrs" type="number" step="0.1" placeholder="7.4"></div>
+      </div>
+      <div class="row-2">
+        <div class="field-group"><div class="field-label">Strain (0–21)</div><input class="field-input" id="h-strain" type="number" step="0.1" min="0" max="21" placeholder="13.3"></div>
+        <div class="field-group"><div class="field-label">Calories (kcal)</div><input class="field-input" id="h-cal" type="number" placeholder="1659"></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t2);">Sleep Stages (minutes)</div>
+      <div class="row-2">
+        <div class="field-group"><div class="field-label">REM</div><input class="field-input" id="h-rem" type="number" placeholder="110"></div>
+        <div class="field-group"><div class="field-label">Deep</div><input class="field-input" id="h-deep" type="number" placeholder="124"></div>
+      </div>
+      <div class="row-2">
+        <div class="field-group"><div class="field-label">Light</div><input class="field-input" id="h-light" type="number" placeholder="211"></div>
+        <div class="field-group"><div class="field-label">Awake</div><input class="field-input" id="h-awake" type="number" placeholder="66"></div>
+      </div>
+      <div class="row-2">
+        <div class="field-group"><div class="field-label">Skin Temp (°C)</div><input class="field-input" id="h-temp" type="number" step="0.1" placeholder="32.8"></div>
+        <div class="field-group"><div class="field-label">Blood O₂ (%)</div><input class="field-input" id="h-spo2" type="number" step="0.1" placeholder="95.3"></div>
+      </div>
+      <div class="field-group"><div class="field-label">Resp Rate (br/min)</div><input class="field-input" id="h-resp" type="number" step="0.1" placeholder="13.7"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Brand -->
+<div class="overlay" id="overlay-brand">
+  <div class="overlay-bg"></div>
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-cancel" data-close="overlay-brand">Cancel</button><div class="sheet-title">Add Brand</div><button class="sheet-save" id="save-brand-btn">Add</button></div>
+    <div class="sheet-body">
+      <div class="field-group"><div class="field-label">Brand / Creator Name</div><input class="field-input" id="b-name" type="text" placeholder="e.g. Clipping Ben Azelart"></div>
+      <div class="field-group"><div class="field-label">Description</div><input class="field-input" id="b-desc" type="text" placeholder="What does this brand do?"></div>
+      <div class="field-group"><div class="field-label">Type</div>
+        <select class="field-select" id="b-type">
+          <option value="personal">Personal Brand</option>
+          <option value="clipping">Clipping Operation</option>
+          <option value="agency">Agency / Client</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="field-group"><div class="field-label">Content Cadence</div><input class="field-input" id="b-cadence" type="text" placeholder="e.g. Every 2h, daily, weekly"></div>
+      <div class="field-group">
+        <div class="field-label" style="margin-bottom:8px;">Platforms</div>
+        <div class="plat-list" id="new-plat-list"></div>
+        <button class="add-plat-btn" id="add-new-plat-btn">+ Add platform</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Finance -->
+<div class="overlay" id="overlay-finance">
+  <div class="overlay-bg"></div>
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-cancel" data-close="overlay-finance">Cancel</button><div class="sheet-title">Add Entry</div><button class="sheet-save" id="save-finance-btn">Add</button></div>
+    <div class="sheet-body">
+      <div class="field-group"><div class="field-label">Type</div>
+        <select class="field-select" id="f-type">
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+      </div>
+      <div class="field-group"><div class="field-label">Label</div><input class="field-input" id="f-label" type="text" placeholder="e.g. TikTok Creator Fund"></div>
+      <div class="field-group"><div class="field-label">Amount ($)</div><input class="field-input" id="f-amount" type="number" step="0.01" placeholder="0.00"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Schedule Block -->
+<div class="overlay" id="overlay-sched">
+  <div class="overlay-bg"></div>
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-cancel" data-close="overlay-sched">Cancel</button><div class="sheet-title">Add Block</div><button class="sheet-save" id="save-sched-btn">Add</button></div>
+    <div class="sheet-body">
+      <div class="field-group"><div class="field-label">Label</div><input class="field-input" id="sc-label" type="text" placeholder="e.g. Deep work, Gym, Content"></div>
+      <div class="row-2">
+        <div class="field-group"><div class="field-label">Start</div><input class="field-input" id="sc-start" type="time"></div>
+        <div class="field-group"><div class="field-label">End</div><input class="field-input" id="sc-end" type="time"></div>
+      </div>
+      <div class="field-group"><div class="field-label">Color</div>
+        <select class="field-select" id="sc-color">
+          <option value="var(--green)">Green</option>
+          <option value="var(--orange)">Orange</option>
+          <option value="var(--blue)">Blue</option>
+          <option value="var(--gold)">Gold</option>
+          <option value="var(--red)">Red</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="overlay" id="overlay-settings">
+  <div class="overlay-bg"></div>
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-cancel" data-close="overlay-settings">Cancel</button><div class="sheet-title">Settings</div><button class="sheet-save" id="save-settings-btn">Save</button></div>
+    <div class="sheet-body">
+      <div class="field-group"><div class="field-label">Your Name</div><input class="field-input" id="s-name" type="text"></div>
+      <div style="height:0.5px;background:var(--border);margin:4px 0;"></div>
+      <div class="sec" style="margin-bottom:8px;">Data Backup</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button id="export-btn" style="padding:13px;background:var(--green-d);border:0.5px solid var(--green);border-radius:10px;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;">⬇ Export backup</button>
+        <button id="import-btn" style="padding:13px;background:var(--s2);border:0.5px solid var(--border);border-radius:10px;color:var(--t1);font-size:13px;font-weight:700;cursor:pointer;">⬆ Import backup</button>
+      </div>
+      <input type="file" id="import-file-input" accept=".json" style="display:none;">
+      <div id="import-status" style="font-size:12px;color:var(--green);display:none;text-align:center;"></div>
+      <div style="font-size:11px;color:var(--t3);margin-top:-6px;line-height:1.5;">Export saves all your data as a .json file. Import restores from a previous export. <strong style="color:var(--orange);">Importing will overwrite your current data.</strong></div>
+      <div style="height:0.5px;background:var(--border);margin:4px 0;"></div>
+      <div class="sec" style="margin-bottom:8px;">Visible Tabs</div>
+      <div style="display:flex;flex-direction:column;gap:6px;" id="tab-toggles">
+        <div style="font-size:12px;color:var(--t2);">Main is always visible. Toggle the rest on or off.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+          <button class="tab-toggle-btn" data-tab="finances">💰 Finances</button>
+          <button class="tab-toggle-btn" data-tab="brand">⭐ Brand</button>
+          <button class="tab-toggle-btn" data-tab="health">❤️ Health</button>
+          <button class="tab-toggle-btn" data-tab="goals">⚡ Goals</button>
+        </div>
+      </div>
+      <div style="height:0.5px;background:var(--border);margin:4px 0;"></div>
+      <div class="sec" style="margin-bottom:8px;">Daily Reminders</div>
+      <div id="notif-permission-banner" style="display:none;background:var(--orange-d);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+        <div style="font-size:13px;color:var(--orange);font-weight:600;margin-bottom:6px;">Notifications not enabled</div>
+        <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">Allow notifications so your reminders can fire even when the app is in the background.</div>
+        <button id="request-notif-btn" style="background:var(--orange);border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;color:#000;cursor:pointer;width:100%;">Enable Notifications</button>
+      </div>
+      <div id="notif-blocked-banner" style="display:none;background:var(--red-d);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+        <div style="font-size:13px;color:var(--red);font-weight:600;margin-bottom:4px;">Notifications blocked</div>
+        <div style="font-size:12px;color:var(--t2);">Go to Settings → Safari → [this site] → Notifications → Allow.</div>
+      </div>
+      <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;cursor:pointer;">
+        <span style="font-size:15px;">Enable daily reminders</span>
+        <input type="checkbox" id="s-notif-enabled" style="width:44px;height:26px;accent-color:var(--green);cursor:pointer;">
+      </label>
+      <div id="notif-times" style="display:flex;flex-direction:column;gap:12px;margin-top:4px;">
+        <div class="row-2">
+          <div class="field-group"><div class="field-label">☀️ Morning</div><input class="field-input" id="s-notif-morning" type="time" value="08:00"></div>
+          <div class="field-group"><div class="field-label">☀️ Message</div><input class="field-input" id="s-notif-morning-msg" type="text" placeholder="Start your hardest goal first"></div>
+        </div>
+        <div class="row-2">
+          <div class="field-group"><div class="field-label">🕛 Midday</div><input class="field-input" id="s-notif-midday" type="time" value="12:00"></div>
+          <div class="field-group"><div class="field-label">🕛 Message</div><input class="field-input" id="s-notif-midday-msg" type="text" placeholder="Midday check-in — keep going!"></div>
+        </div>
+        <div class="row-2">
+          <div class="field-group"><div class="field-label">🌙 Evening</div><input class="field-input" id="s-notif-evening" type="time" value="20:00"></div>
+          <div class="field-group"><div class="field-label">🌙 Message</div><input class="field-input" id="s-notif-evening-msg" type="text" placeholder="Wrap up your day strong"></div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:8px;line-height:1.5;">Reminders show your live goal progress. Tap a notification to open the app.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Day Type -->
+<div class="overlay" id="overlay-daytype">
+  <div class="overlay-bg"></div>
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-cancel" data-close="overlay-daytype">Cancel</button><div class="sheet-title">Day Type</div></div>
+    <div class="sheet-body" id="daytype-list"></div>
+  </div>
+</div>
+
+<script>
+// ─── CONSTANTS ────────────────────────────────────────────
+const CIRC = 502.65; // 2π × 80
+const DAY_TYPES = ['Full Day','Rest Day','Active Recovery','Travel Day','Light Day'];
+const PLATFORM_NAMES = ['TikTok','Instagram','YouTube','Twitter/X','LinkedIn','Facebook'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ─── STATE ────────────────────────────────────────────────
+const KEY = 'pd-v1';
+let S;
+
+function defaultState() {
+  return {
+    name: '',
+    dayType: 'Full Day',
+    health: { recovery:0, hrv:0, rhr:0, sleepScore:0, sleepHrs:0, strain:0, cal:0, rem:0, deep:0, light:0, awake:0, temp:0, spo2:0, resp:0, date:null },
+    goals: [],
+    goalStreak: 0,
+    lastGoalDate: null,
+    brands: [],
+    finances: [],
+    schedule: [],
+    notifPrefs: { enabled: false, morning: '08:00', midday: '12:00', evening: '20:00' },
+    hiddenTabs: [],
+  };
+}
+
+function load() {
+  try { S = JSON.parse(localStorage.getItem(KEY)) || defaultState(); }
+  catch { S = defaultState(); }
+  if (!S.schedule) S.schedule = [];
+  if (!S.goalStreak) S.goalStreak = 0;
+  if (!S.notifPrefs) S.notifPrefs = { enabled: false, morning: '08:00', midday: '12:00', evening: '20:00' };
+  if (!S.hiddenTabs) S.hiddenTabs = [];
+}
+
+function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
+
+// ─── UTILITIES ────────────────────────────────────────────
+function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+function today() { return new Date().toISOString().slice(0,10); }
+function todayLabel() { const d=new Date(); return `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`; }
+function fmtFollowers(n) {
+  if (!n && n!==0) return '—';
+  n=Number(n);
+  if (n>=1e6) return (n/1e6).toFixed(1).replace(/\.0$/,'')+'M';
+  if (n>=1000) return (n/1000).toFixed(1).replace(/\.0$/,'')+'K';
+  return n.toString();
+}
+function fmtMoney(n) {
+  n=Number(n)||0;
+  return (n<0?'-$':'+$')+Math.abs(n).toFixed(2).replace(/\.00$/,'');
+}
+function fmtMins(m) {
+  m=Number(m)||0;
+  const h=Math.floor(m/60), min=m%60;
+  return h>0?(min>0?`${h}h ${min}m`:`${h}h`):`${min}m`;
+}
+function fmtTime(t) { if(!t)return''; const [h,m]=t.split(':'); const hr=Number(h)%12||12; return `${hr}:${m} ${Number(h)<12?'AM':'PM'}`; }
+
+// ─── RECOVERY ─────────────────────────────────────────────
+function recoveryColor(r) { return r>=67?'var(--green)':r>=34?'var(--orange)':'var(--red)'; }
+function recoveryStatus(r) {
+  if (!r) return '';
+  if (r>=80) return 'Go hard today';
+  if (r>=67) return 'Ready to perform';
+  if (r>=50) return 'Moderate effort';
+  if (r>=34) return 'Take it easy';
+  return 'Rest recommended';
+}
+function recoveryDotClass(r) { return r>=67?'dot-green':r>=34?'dot-orange':'dot-red'; }
+function statDotClass(val, low, high) {
+  if (val===0) return 'dot-gray';
+  if (val<low||val>high) return 'dot-red';
+  if (val<low*1.1||val>high*0.9) return 'dot-orange';
+  return 'dot-green';
+}
+
+function updateRing(ringEl, scoreEl, statusEl, r) {
+  const offset = CIRC * (1 - Math.min(100,Math.max(0,r))/100);
+  const color = recoveryColor(r);
+  ringEl.style.strokeDashoffset = offset;
+  ringEl.style.stroke = color;
+  if (scoreEl) scoreEl.textContent = r||'—';
+  if (scoreEl) scoreEl.style.color = r ? color : 'var(--t2)';
+  if (statusEl) { statusEl.textContent = recoveryStatus(r); statusEl.style.color = color; }
+}
+
+// ─── RENDER HEALTH ────────────────────────────────────────
+function renderHealth() {
+  const h = S.health;
+  const r = h.recovery||0;
+  updateRing(document.getElementById('health-ring'), document.getElementById('health-score'), document.getElementById('health-ring-status'), r);
+  updateRing(document.getElementById('main-ring'), document.getElementById('main-score'), document.getElementById('main-ring-status'), r);
+
+  // Sleep bar
+  const total = (h.rem||0)+(h.deep||0)+(h.light||0)+(h.awake||0);
+  const bar = document.getElementById('sleep-bar');
+  const legend = document.getElementById('sleep-legend');
+  document.getElementById('sleep-total').textContent = total?fmtMins(total)+' total':'';
+  if (total) {
+    const segs = [
+      {min:h.rem,color:'#f0f0f5',label:'REM'},
+      {min:h.deep,color:'#4a4a6a',label:'Deep'},
+      {min:h.light,color:'#2a2a4a',label:'Light'},
+      {min:h.awake,color:'#1a1a2a',label:'Awake'},
+    ];
+    bar.innerHTML = segs.map(s=>`<div class="sleep-seg" style="flex:${s.min};background:${s.color}"></div>`).join('');
+    legend.innerHTML = segs.map(s=>`<div class="sleep-row"><span class="sleep-dot" style="background:${s.color}"></span>${s.label}<span class="sleep-val">${fmtMins(s.min)}</span></div>`).join('');
+  } else {
+    bar.innerHTML='<div style="flex:1;background:var(--s3)"></div>';
+    legend.innerHTML='<div style="color:var(--t3);font-size:13px;">No sleep data — tap Edit Metrics</div>';
+  }
+
+  // Main stats
+  const g2 = document.getElementById('stat-grid-main');
+  const stats2 = [
+    {label:'Sleep',dot:statDotClass(h.sleepScore,70,95),val:h.sleepScore?(h.sleepScore+'%'):'—',sub:h.sleepHrs?(h.sleepHrs+'h sleep'):''},
+    {label:'Strain',dot:h.strain?'dot-green':'dot-gray',val:h.strain||'—',sub:h.cal?(h.cal.toLocaleString()+' kcal'):''},
+    {label:'HRV',dot:statDotClass(h.hrv,40,200),val:h.hrv||'—',sub:'ms'},
+    {label:'RHR',dot:statDotClass(h.rhr,40,60),val:h.rhr||'—',sub:'bpm'},
+  ];
+  g2.innerHTML = stats2.map(s=>`
+    <div class="stat-card">
+      <div class="stat-label">${s.label}<span class="stat-dot ${s.dot}"></span></div>
+      <div class="stat-val">${s.val}</div>
+      ${s.sub?`<div class="stat-sub">${s.sub}</div>`:''}
+    </div>`).join('');
+
+  const g3 = document.getElementById('stat-grid-bottom');
+  const stats3 = [
+    {label:'Skin Temp',dot:statDotClass(h.temp,35,39),val:h.temp?(h.temp+'°C'):'—'},
+    {label:'Blood O₂',dot:statDotClass(h.spo2,95,100),val:h.spo2?(h.spo2+'%'):'—'},
+    {label:'Resp Rate',dot:statDotClass(h.resp,12,20),val:h.resp?(h.resp+' br/min'):'—'},
+  ];
+  g3.innerHTML = stats3.map(s=>`
+    <div class="stat-card-sm">
+      <div class="stat-label" style="font-size:9.5px;">${s.label}<span class="stat-dot ${s.dot}"></span></div>
+      <div class="stat-val-sm">${s.val}</div>
+    </div>`).join('');
+}
+
+// ─── RENDER GOALS ─────────────────────────────────────────
+function checkGoalStreak() {
+  const t = today();
+  const todayGoals = S.goals.filter(g=>g.date===t);
+  const doneToday = todayGoals.filter(g=>g.done).length;
+  if (doneToday > 0 && S.lastGoalDate !== t) {
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    const yStr = yesterday.toISOString().slice(0,10);
+    S.goalStreak = (S.lastGoalDate===yStr) ? (S.goalStreak||0)+1 : 1;
+    S.lastGoalDate = t;
+    save();
+  }
+}
+
+function renderGoals() {
+  checkGoalStreak();
+  const t = today();
+  const todayGoals = S.goals.filter(g=>g.date===t);
+  const done = todayGoals.filter(g=>g.done).length;
+  const total = todayGoals.length;
+
+  document.getElementById('goal-date').textContent = 'Today — '+todayLabel().toUpperCase();
+  document.getElementById('goal-count-done').textContent = done;
+  document.getElementById('goal-count-total').textContent = `/ ${total} complete`;
+  document.getElementById('streak-badge').textContent = `⚡ ${S.goalStreak||0} day streak`;
+
+  const list = document.getElementById('goal-list');
+  list.innerHTML = todayGoals.map(g=>`
+    <div class="goal-item ${g.done?'done':''}" data-id="${g.id}">
+      <button class="goal-check ${g.done?'done':''}" data-id="${g.id}"></button>
+      <div class="goal-text">${escHtml(g.text)}</div>
+      <button class="goal-del" data-del="${g.id}">×</button>
+    </div>`).join('');
+
+  renderMainGoalsPreview(todayGoals, done, total);
+}
+
+function renderMainGoalsPreview(todayGoals, done, total) {
+  const el = document.getElementById('main-goals-list');
+  if (!el) return;
+  if (!todayGoals.length) { el.innerHTML='<div style="color:var(--t3);font-size:13px;padding:8px 0;">No goals yet today</div>'; return; }
+  const preview = todayGoals.slice(0,4);
+  el.innerHTML = `<div style="font-size:13px;color:var(--t2);margin-bottom:8px;">${done} / ${total} complete</div>`
+    + preview.map(g=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);">
+        <span style="font-size:14px;${g.done?'color:var(--t3);text-decoration:line-through;':''}">${escHtml(g.text)}</span>
+      </div>`).join('')
+    + (todayGoals.length>4?`<div style="color:var(--t2);font-size:12px;padding-top:8px;">+${todayGoals.length-4} more</div>`:'');
+}
+
+// ─── RENDER BRANDS ────────────────────────────────────────
+function renderBrands() {
+  const el = document.getElementById('brand-list');
+  const empty = document.getElementById('brand-empty');
+  if (!S.brands.length) { el.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  el.innerHTML = S.brands.map(b=>{
+    const profit = (b.finances||[]).reduce((a,e)=>e.type==='income'?a+Number(e.amount):a-Number(e.amount),0);
+    const profitClass = profit>=0?'profit-pos':'profit-neg';
+    const platHtml = (b.platforms||[]).map(p=>`
+      <div class="platform-card">
+        <div class="platform-name"><span class="live-dot"></span>${escHtml(p.name)}</div>
+        <div class="platform-count">${fmtFollowers(p.followers)}</div>
+        <div class="platform-unit">${p.name==='YouTube'?'subscribers':'followers'}</div>
+      </div>`).join('');
+
+    const opsHtml = b.cadence ? `
+      <div class="brand-ops">
+        <div class="brand-ops-grid">
+          <div class="ops-cell"><div class="ops-label">Cadence</div><div class="ops-val">${escHtml(b.cadence)}</div></div>
+          <div class="ops-cell"><div class="ops-label">Type</div><div class="ops-val">${b.type||'—'}</div></div>
+        </div>
+      </div>` : '';
+
+    // today's reflection
+    const todayRef = (b.reflections||[]).find(r=>r.date===today());
+
+    return `<div class="brand-card">
+      <div class="brand-card-top">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;">
+          <div>
+            <div class="brand-name">${escHtml(b.name)}</div>
+            <div class="brand-desc">${escHtml(b.desc||'')}</div>
+          </div>
+          <button class="chip chip-red" style="flex-shrink:0;margin-left:8px;font-size:9px;" onclick="deleteBrand('${b.id}')">Delete</button>
+        </div>
+        <div class="platforms">${platHtml}</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="chip chip-blue" onclick="openUpdateFollowers('${b.id}')">Update Followers</button>
+          <button class="chip chip-green" onclick="openAddBrandFinance('${b.id}')">Log Income/Expense</button>
+        </div>
+      </div>
+      ${opsHtml}
+      <div class="brand-profit">
+        <div><div class="profit-label">This Month's Profit</div></div>
+        <div class="profit-val ${profitClass}">${profit>=0?'+$'+profit.toFixed(2):'-$'+Math.abs(profit).toFixed(2)}</div>
+      </div>
+      <div class="reflection-wrap">
+        <div class="sec" style="font-size:9.5px;margin-bottom:4px;">Today's Reflection</div>
+        <div class="reflection-q">Where is the account going? What's working? What's failing? What to do next?</div>
+        <textarea class="reflection-ta" data-brand="${b.id}" placeholder="Today my page felt...">${escHtml(todayRef?todayRef.content:'')}</textarea>
+        <button class="reflection-save" data-saverefl="${b.id}">Save reflection</button>
+        <div style="clear:both;"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let activeBrandFinanceId = null;
+let activeUpdateFollowersId = null;
+
+function openUpdateFollowers(brandId) {
+  activeUpdateFollowersId = brandId;
+  const brand = S.brands.find(b=>b.id===brandId);
+  if (!brand) return;
+  // Reuse add brand sheet body to show follower update
+  document.getElementById('b-name').value = brand.name;
+  document.getElementById('b-desc').value = brand.desc||'';
+  document.getElementById('b-cadence').value = brand.cadence||'';
+  document.getElementById('b-type').value = brand.type||'personal';
+  const platList = document.getElementById('new-plat-list');
+  platList.innerHTML = '';
+  (brand.platforms||[]).forEach(p => addPlatformRow(p.name, p.followers));
+  openOverlay('overlay-brand');
+  document.querySelector('#overlay-brand .sheet-title').textContent = 'Update Brand';
+  document.querySelector('#overlay-brand .sheet-save').textContent = 'Save';
+}
+
+function openAddBrandFinance(brandId) {
+  activeBrandFinanceId = brandId;
+  document.getElementById('f-label').value='';
+  document.getElementById('f-amount').value='';
+  openOverlay('overlay-finance');
+}
+
+function deleteBrand(id) {
+  S.brands = S.brands.filter(b=>b.id!==id);
+  save(); renderBrands();
+}
+
+// ─── RENDER FINANCES ──────────────────────────────────────
+function renderFinances() {
+  const m = new Date().getMonth();
+  const entries = S.finances.filter(e=>{ const d=new Date(e.date); return d.getMonth()===m; });
+  const income = entries.filter(e=>e.type==='income').reduce((a,e)=>a+Number(e.amount),0);
+  const expense = entries.filter(e=>e.type==='expense').reduce((a,e)=>a+Number(e.amount),0);
+  const profit = income-expense;
+
+  document.getElementById('fin-income').textContent = '$'+income.toFixed(2);
+  document.getElementById('fin-expense').textContent = '$'+expense.toFixed(2);
+  const profEl = document.getElementById('fin-profit');
+  profEl.textContent = (profit>=0?'+$':'-$')+Math.abs(profit).toFixed(2);
+  profEl.style.color = profit>=0?'var(--green)':'var(--red)';
+
+  const list = document.getElementById('finance-list');
+  const empty = document.getElementById('finance-empty');
+  if (!entries.length) { list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  list.innerHTML = entries.map(e=>`
+    <div class="finance-entry">
+      <div class="finance-type-dot" style="background:${e.type==='income'?'var(--green)':'var(--red)'}"></div>
+      <div class="finance-info">
+        <div class="finance-entry-label">${escHtml(e.label||'Entry')}</div>
+        <div class="finance-entry-date">${new Date(e.date).toLocaleDateString()}</div>
+      </div>
+      <div class="finance-amount" style="color:${e.type==='income'?'var(--green)':'var(--red)'}">
+        ${e.type==='income'?'+':'-'}$${Number(e.amount).toFixed(2)}
+      </div>
+      <button class="finance-del" data-fin-del="${e.id}">×</button>
+    </div>`).join('');
+}
+
+// ─── RENDER SCHEDULE ──────────────────────────────────────
+function renderSchedule() {
+  const el = document.getElementById('schedule-list');
+  const empty = document.getElementById('schedule-empty');
+  if (!S.schedule.length) { el.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  const sorted = [...S.schedule].sort((a,b)=>a.start.localeCompare(b.start));
+  el.innerHTML = sorted.map(s=>`
+    <div class="schedule-item">
+      <div class="sched-color" style="background:${s.color||'var(--green)'}"></div>
+      <div class="sched-info">
+        <div class="sched-label">${escHtml(s.label)}</div>
+        <div class="sched-time">${fmtTime(s.start)} – ${fmtTime(s.end)}</div>
+      </div>
+      <button class="sched-del" data-sched-del="${s.id}">×</button>
+    </div>`).join('');
+}
+
+
+// ─── RENDER HEADER ────────────────────────────────────────
+function renderHeader() {
+  document.getElementById('header-title').textContent = (S.name||'My')+`'s Dashboard`;
+  document.getElementById('header-date').textContent = todayLabel().toUpperCase();
+  document.getElementById('day-type-btn').textContent = S.dayType||'Full Day';
+}
+
+// ─── MODALS ───────────────────────────────────────────────
+function openOverlay(id) { document.getElementById(id).classList.add('open'); }
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+
+// Platform row builder for brand sheet
+let newPlatforms = [];
+function addPlatformRow(name='', followers='') {
+  const row = document.createElement('div');
+  row.className = 'plat-row';
+  row.innerHTML = `
+    <select class="field-select" style="flex:1.2">${PLATFORM_NAMES.map(n=>`<option ${n===name?'selected':''}>${n}</option>`).join('')}</select>
+    <input class="field-input" type="number" placeholder="Followers" value="${followers}" style="flex:1">
+    <button class="plat-del-btn" type="button">×</button>`;
+  row.querySelector('.plat-del-btn').onclick = ()=>row.remove();
+  document.getElementById('new-plat-list').appendChild(row);
+}
+
+// ─── TAB VISIBILITY ───────────────────────────────────────
+function applyTabVisibility() {
+  const hidden = S.hiddenTabs || [];
+  document.querySelectorAll('.nav-tab[data-view]').forEach(btn => {
+    const v = btn.dataset.view;
+    if (v === 'main') return;
+    btn.style.display = hidden.includes(v) ? 'none' : '';
+  });
+  // If current view was just hidden, redirect to main
+  if (hidden.includes(currentView)) switchView('main');
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────
+let currentView = 'main';
+function switchView(v) {
+  currentView = v;
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v)?.classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+  if (v==='health') renderHealth();
+  if (v==='goals') renderGoals();
+  if (v==='brand') renderBrands();
+  if (v==='finances') renderFinances();
+  if (v==='main') { renderHeader(); renderSchedule(); renderGoals(); }
+}
+
+// ─── SETUP ────────────────────────────────────────────────
+function completeSetup(name) {
+  S.name = name.trim() || 'My';
+  save();
+  document.getElementById('setup').style.display='none';
+  document.getElementById('header').style.display='';
+  document.getElementById('views').style.display='';
+  document.getElementById('bottom-nav').style.display='';
+  renderHeader();
+  renderHealth();
+  renderGoals();
+  renderSchedule();
+  renderOverseer();
+}
+
+// ─── ESCAPE HTML ──────────────────────────────────────────
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ─── EVENT WIRING ─────────────────────────────────────────
+document.getElementById('setup-btn').onclick = ()=>{
+  const name=document.getElementById('setup-name').value.trim();
+  if(!name){document.getElementById('setup-name').focus();return;}
+  completeSetup(name);
+};
+document.getElementById('setup-name').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('setup-btn').click(); });
+
+// Nav tabs
+document.querySelectorAll('.nav-tab').forEach(btn=>{
+  btn.addEventListener('click',()=>switchView(btn.dataset.view));
+});
+
+// Close overlays
+document.querySelectorAll('[data-close]').forEach(btn=>{
+  btn.onclick=()=>{ closeOverlay(btn.dataset.close); activeBrandFinanceId=null; activeUpdateFollowersId=null; };
+});
+document.querySelectorAll('.overlay-bg').forEach(bg=>{
+  bg.onclick=()=>{ bg.parentElement.classList.remove('open'); activeBrandFinanceId=null; activeUpdateFollowersId=null; };
+});
+
+// Health edit
+document.getElementById('edit-health-btn').onclick=()=>{
+  const h=S.health;
+  ['recovery','hrv','rhr'].forEach(k=>{document.getElementById('h-'+k).value=h[k]||'';});
+  document.getElementById('h-sleep-score').value=h.sleepScore||'';
+  document.getElementById('h-sleep-hrs').value=h.sleepHrs||'';
+  document.getElementById('h-strain').value=h.strain||'';
+  document.getElementById('h-cal').value=h.cal||'';
+  document.getElementById('h-rem').value=h.rem||'';
+  document.getElementById('h-deep').value=h.deep||'';
+  document.getElementById('h-light').value=h.light||'';
+  document.getElementById('h-awake').value=h.awake||'';
+  document.getElementById('h-temp').value=h.temp||'';
+  document.getElementById('h-spo2').value=h.spo2||'';
+  document.getElementById('h-resp').value=h.resp||'';
+  openOverlay('overlay-health');
+};
+
+document.getElementById('save-health-btn').onclick=()=>{
+  S.health = {
+    recovery: Number(document.getElementById('h-recovery').value)||0,
+    hrv:      Number(document.getElementById('h-hrv').value)||0,
+    rhr:      Number(document.getElementById('h-rhr').value)||0,
+    sleepScore:Number(document.getElementById('h-sleep-score').value)||0,
+    sleepHrs: Number(document.getElementById('h-sleep-hrs').value)||0,
+    strain:   Number(document.getElementById('h-strain').value)||0,
+    cal:      Number(document.getElementById('h-cal').value)||0,
+    rem:      Number(document.getElementById('h-rem').value)||0,
+    deep:     Number(document.getElementById('h-deep').value)||0,
+    light:    Number(document.getElementById('h-light').value)||0,
+    awake:    Number(document.getElementById('h-awake').value)||0,
+    temp:     Number(document.getElementById('h-temp').value)||0,
+    spo2:     Number(document.getElementById('h-spo2').value)||0,
+    resp:     Number(document.getElementById('h-resp').value)||0,
+    date:     today()
+  };
+  save(); closeOverlay('overlay-health'); renderHealth();
+};
+
+// Goals
+document.getElementById('goal-add-btn').onclick = addGoal;
+document.getElementById('goal-input').addEventListener('keydown',e=>{ if(e.key==='Enter') addGoal(); });
+
+function addGoal() {
+  const input=document.getElementById('goal-input');
+  const text=input.value.trim();
+  if(!text) return;
+  S.goals.push({id:uid(),text,done:false,date:today()});
+  input.value='';
+  save(); renderGoals();
+}
+
+document.getElementById('goal-list').addEventListener('click',e=>{
+  const check=e.target.closest('.goal-check');
+  const del=e.target.closest('[data-del]');
+  if(check){ const id=check.dataset.id; const g=S.goals.find(g=>g.id===id); if(g){g.done=!g.done; save(); renderGoals();} }
+  if(del){ S.goals=S.goals.filter(g=>g.id!==del.dataset.del); save(); renderGoals(); }
+});
+
+// Add Brand
+document.getElementById('add-brand-btn').onclick=()=>{
+  activeUpdateFollowersId=null;
+  document.getElementById('b-name').value='';
+  document.getElementById('b-desc').value='';
+  document.getElementById('b-cadence').value='';
+  document.getElementById('b-type').value='personal';
+  document.getElementById('new-plat-list').innerHTML='';
+  document.querySelector('#overlay-brand .sheet-title').textContent='Add Brand';
+  document.querySelector('#overlay-brand .sheet-save').textContent='Add';
+  openOverlay('overlay-brand');
+};
+
+document.getElementById('add-new-plat-btn').onclick=()=>addPlatformRow();
+
+document.getElementById('save-brand-btn').onclick=()=>{
+  const name=document.getElementById('b-name').value.trim();
+  if(!name) return;
+  const rows=[...document.getElementById('new-plat-list').querySelectorAll('.plat-row')];
+  const platforms=rows.map(r=>({
+    name:r.querySelector('select').value,
+    followers:Number(r.querySelectorAll('input')[0].value)||0
+  }));
+
+  if(activeUpdateFollowersId){
+    const brand=S.brands.find(b=>b.id===activeUpdateFollowersId);
+    if(brand){ brand.name=name; brand.desc=document.getElementById('b-desc').value; brand.cadence=document.getElementById('b-cadence').value; brand.type=document.getElementById('b-type').value; brand.platforms=platforms; }
+    activeUpdateFollowersId=null;
+  } else {
+    S.brands.push({id:uid(),name,desc:document.getElementById('b-desc').value,type:document.getElementById('b-type').value,cadence:document.getElementById('b-cadence').value,platforms,finances:[],reflections:[]});
+  }
+  save(); closeOverlay('overlay-brand'); renderBrands();
+};
+
+// Finances
+document.getElementById('add-finance-btn').onclick=()=>{
+  activeBrandFinanceId=null;
+  document.getElementById('f-label').value='';
+  document.getElementById('f-amount').value='';
+  openOverlay('overlay-finance');
+};
+
+document.getElementById('save-finance-btn').onclick=()=>{
+  const amount=Number(document.getElementById('f-amount').value);
+  const label=document.getElementById('f-label').value.trim();
+  const type=document.getElementById('f-type').value;
+  if(!amount) return;
+  const entry={id:uid(),type,label,amount,date:new Date().toISOString()};
+  if(activeBrandFinanceId){
+    const brand=S.brands.find(b=>b.id===activeBrandFinanceId);
+    if(brand){if(!brand.finances)brand.finances=[];brand.finances.push(entry);}
+    activeBrandFinanceId=null;
+    save(); closeOverlay('overlay-finance'); renderBrands();
+  } else {
+    S.finances.push(entry);
+    save(); closeOverlay('overlay-finance'); renderFinances();
+  }
+};
+
+document.getElementById('finance-list').addEventListener('click',e=>{
+  const del=e.target.closest('[data-fin-del]');
+  if(del){ S.finances=S.finances.filter(f=>f.id!==del.dataset.finDel); save(); renderFinances(); }
+});
+
+// Schedule
+document.getElementById('add-sched-btn').onclick=()=>{ document.getElementById('sc-label').value=''; openOverlay('overlay-sched'); };
+document.getElementById('save-sched-btn').onclick=()=>{
+  const label=document.getElementById('sc-label').value.trim();
+  if(!label) return;
+  S.schedule.push({id:uid(),label,start:document.getElementById('sc-start').value,end:document.getElementById('sc-end').value,color:document.getElementById('sc-color').value});
+  save(); closeOverlay('overlay-sched'); renderSchedule();
+};
+document.getElementById('schedule-list').addEventListener('click',e=>{
+  const del=e.target.closest('[data-sched-del]');
+  if(del){ S.schedule=S.schedule.filter(s=>s.id!==del.dataset.schedDel); save(); renderSchedule(); }
+});
+
+
+// Brand reflections (event delegation)
+document.getElementById('brand-list').addEventListener('click',e=>{
+  const saveBtn=e.target.closest('[data-saverefl]');
+  if(saveBtn){
+    const id=saveBtn.dataset.saverefl;
+    const ta=document.querySelector(`textarea[data-brand="${id}"]`);
+    const brand=S.brands.find(b=>b.id===id);
+    if(brand&&ta){
+      if(!brand.reflections)brand.reflections=[];
+      const t=today();
+      const existing=brand.reflections.find(r=>r.date===t);
+      if(existing)existing.content=ta.value;
+      else brand.reflections.push({date:t,content:ta.value});
+      save();
+      saveBtn.textContent='Saved ✓';
+      setTimeout(()=>saveBtn.textContent='Save reflection',2000);
+    }
+  }
+});
+
+// ─── NOTIFICATIONS ────────────────────────────────────────
+let _notifTimers = [];
+
+function clearNotifTimers() {
+  _notifTimers.forEach(t => clearTimeout(t));
+  _notifTimers = [];
+}
+
+function scheduleNotifications() {
+  clearNotifTimers();
+  const p = S.notifPrefs;
+  if (!p?.enabled) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const t = today();
+  const todayGoals = S.goals.filter(g => g.date === t);
+  const total = todayGoals.length;
+  const done = todayGoals.filter(g => g.done).length;
+
+  const slots = [
+    {
+      time: p.morning,
+      title: '⚡ Morning Goals',
+      body: p.morningMsg || (total > 0
+        ? `You have ${total} goals today. Start with your hardest one.`
+        : 'No goals set yet — add your goals for today!'),
+    },
+    {
+      time: p.midday,
+      title: '⚡ Midday Check-in',
+      body: p.middayMsg || (total > 0
+        ? `${done} of ${total} goals done. Keep moving!`
+        : 'Halfway through — how are you doing?'),
+    },
+    {
+      time: p.evening,
+      title: '⚡ Evening Wrap-up',
+      body: p.eveningMsg || (total > 0
+        ? `${done} of ${total} goals completed.${done === total ? ' Perfect day! 🔥' : ' Finish strong!'}`
+        : 'End of day — set your goals for tomorrow now!'),
+    },
+  ];
+
+  const now = new Date();
+  slots.forEach(slot => {
+    if (!slot.time) return;
+    const [h, m] = slot.time.split(':').map(Number);
+    const target = new Date();
+    target.setHours(h, m, 0, 0);
+    if (target <= now) return; // already passed today
+    const delay = target - now;
+    _notifTimers.push(setTimeout(() => {
+      new Notification(slot.title, {
+        body: slot.body,
+        icon: './icon-192.png',
+        tag: 'goalmaxxing-' + slot.time,
+        requireInteraction: false,
+      });
+    }, delay));
+  });
+}
+
+async function requestNotifPermission() {
+  if (!('Notification' in window)) return 'unsupported';
+  const result = await Notification.requestPermission();
+  if (result === 'granted') {
+    S.notifPrefs.enabled = true;
+    save();
+    scheduleNotifications();
+    updateNotifUI();
+  }
+  return result;
+}
+
+function updateNotifUI() {
+  const banner = document.getElementById('notif-permission-banner');
+  const blocked = document.getElementById('notif-blocked-banner');
+  const times = document.getElementById('notif-times');
+  if (!banner) return;
+  const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+  banner.style.display = perm === 'default' ? '' : 'none';
+  blocked.style.display = perm === 'denied' ? '' : 'none';
+  times.style.opacity = (perm === 'granted' || perm === 'default') ? '1' : '0.4';
+}
+
+document.getElementById('request-notif-btn').onclick = requestNotifPermission;
+
+// Checkbox: toggle enabled state immediately
+document.getElementById('s-notif-enabled').addEventListener('change', e => {
+  if (e.target.checked && Notification.permission !== 'granted') {
+    requestNotifPermission();
+    e.target.checked = false; // let requestNotifPermission re-enable after grant
+  }
+});
+
+// ─── EXPORT / IMPORT ──────────────────────────────────────
+document.getElementById('export-btn').onclick = () => {
+  const filename = `dashboard-backup-${today()}.json`;
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+};
+
+document.getElementById('import-btn').onclick = () => {
+  document.getElementById('import-file-input').click();
+};
+
+document.getElementById('import-file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      // Sanity check — must have a name field
+      if (typeof imported.name === 'undefined') throw new Error('Invalid backup');
+      Object.assign(S, imported);
+      save();
+      const status = document.getElementById('import-status');
+      status.textContent = '✓ Backup restored successfully!';
+      status.style.display = 'block';
+      setTimeout(() => { status.style.display = 'none'; }, 3000);
+      // Re-render everything
+      renderHeader(); renderHealth(); renderGoals(); renderSchedule(); renderBrands(); renderFinances(); applyTabVisibility();
+    } catch {
+      alert('Could not read that file. Make sure it\'s a dashboard backup .json.');
+    }
+    e.target.value = ''; // reset so the same file can be re-imported
+  };
+  reader.readAsText(file);
+});
+
+// Settings
+document.getElementById('settings-btn').onclick = () => {
+  const p = S.notifPrefs;
+  document.getElementById('s-name').value = S.name || '';
+  document.getElementById('s-notif-enabled').checked = p.enabled && Notification.permission === 'granted';
+  document.getElementById('s-notif-morning').value = p.morning || '08:00';
+  document.getElementById('s-notif-midday').value  = p.midday  || '12:00';
+  document.getElementById('s-notif-evening').value = p.evening || '20:00';
+  document.getElementById('s-notif-morning-msg').value = p.morningMsg || '';
+  document.getElementById('s-notif-midday-msg').value  = p.middayMsg  || '';
+  document.getElementById('s-notif-evening-msg').value = p.eveningMsg || '';
+  // Populate tab toggles
+  document.querySelectorAll('.tab-toggle-btn').forEach(btn => {
+    const isOn = !(S.hiddenTabs || []).includes(btn.dataset.tab);
+    btn.classList.toggle('on', isOn);
+  });
+  updateNotifUI();
+  openOverlay('overlay-settings');
+};
+
+// Tab toggle clicks (inside settings sheet)
+document.getElementById('tab-toggles').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-toggle-btn');
+  if (!btn) return;
+  btn.classList.toggle('on');
+});
+
+document.getElementById('save-settings-btn').onclick = () => {
+  S.name = document.getElementById('s-name').value.trim() || S.name;
+  const enabled = document.getElementById('s-notif-enabled').checked;
+  S.notifPrefs = {
+    enabled: enabled && Notification.permission === 'granted',
+    morning:    document.getElementById('s-notif-morning').value,
+    midday:     document.getElementById('s-notif-midday').value,
+    evening:    document.getElementById('s-notif-evening').value,
+    morningMsg: document.getElementById('s-notif-morning-msg').value.trim(),
+    middayMsg:  document.getElementById('s-notif-midday-msg').value.trim(),
+    eveningMsg: document.getElementById('s-notif-evening-msg').value.trim(),
+  };
+  // Save hidden tabs (any toggle btn that is NOT .on)
+  S.hiddenTabs = [...document.querySelectorAll('.tab-toggle-btn')]
+    .filter(btn => !btn.classList.contains('on'))
+    .map(btn => btn.dataset.tab);
+  save();
+  closeOverlay('overlay-settings');
+  renderHeader();
+  applyTabVisibility();
+  scheduleNotifications();
+};
+
+// Day type
+document.getElementById('day-type-btn').onclick=()=>{
+  const list=document.getElementById('daytype-list');
+  list.innerHTML=DAY_TYPES.map(t=>`
+    <button style="width:100%;padding:15px 16px;background:${t===S.dayType?'var(--s3)':'none'};border:none;border-bottom:0.5px solid var(--border);color:${t===S.dayType?'var(--green)':'var(--t1)'};font-size:16px;font-weight:${t===S.dayType?'700':'400'};text-align:left;cursor:pointer;font-family:inherit;" data-dt="${escHtml(t)}">${escHtml(t)}</button>`).join('');
+  openOverlay('overlay-daytype');
+};
+document.getElementById('daytype-list').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-dt]');
+  if(btn){ S.dayType=btn.dataset.dt; save(); renderHeader(); closeOverlay('overlay-daytype'); }
+});
+
+// Main → Goals shortcut
+document.getElementById('main-goto-goals').onclick=()=>switchView('goals');
+
+// ─── INIT ─────────────────────────────────────────────────
+load();
+
+// Register service worker (enables offline + notification click handling)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+if (!S.name) {
+  document.getElementById('header').style.display='none';
+  document.getElementById('views').style.display='none';
+  document.getElementById('bottom-nav').style.display='none';
+} else {
+  document.getElementById('setup').style.display='none';
+  document.getElementById('header').style.display='';
+  document.getElementById('views').style.display='';
+  document.getElementById('bottom-nav').style.display='';
+  renderHeader(); renderHealth(); renderGoals(); renderSchedule();
+  applyTabVisibility();
+  scheduleNotifications();
+}
+</script>
+</body>
+</html>
