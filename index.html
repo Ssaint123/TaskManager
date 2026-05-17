@@ -1180,17 +1180,23 @@ function deleteBrand(id) {
 
 // ─── RENDER FINANCES ──────────────────────────────────────
 function getAllFinanceEntries() {
-  // Merge personal finances + all brand finances, tagged with source
   const m = new Date().getMonth(), yr = new Date().getFullYear();
-  const inMonth = e => { const d=new Date(e.date); return d.getMonth()===m && d.getFullYear()===yr; };
+  const inMonth = e => {
+    if (!e || !e.date) return false;
+    const d = new Date(e.date);
+    return !isNaN(d) && d.getMonth()===m && d.getFullYear()===yr;
+  };
 
-  const personal = (S.finances||[]).filter(inMonth).map(e=>({ ...e, _source:'personal' }));
+  const personal = (S.finances||[]).filter(inMonth).map(e=>Object.assign({}, e, { _source:'personal' }));
 
-  const brand = (S.brands||[]).flatMap(b=>
-    (b.finances||[]).filter(inMonth).map(e=>({ ...e, _source:'brand', _brandName: b.name }))
-  );
+  const brand = [];
+  (S.brands||[]).forEach(b => {
+    (b.finances||[]).filter(inMonth).forEach(e => {
+      brand.push(Object.assign({}, e, { _source:'brand', _brandName: b.name }));
+    });
+  });
 
-  return [...personal, ...brand].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  return personal.concat(brand).sort((a,b)=>new Date(b.date)-new Date(a.date));
 }
 
 function renderFinances() {
