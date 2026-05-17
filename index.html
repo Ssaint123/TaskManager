@@ -680,12 +680,83 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
   if (link) link.href = c.toDataURL('image/png');
 })();
 
+// ─── PUSH CONFIG (fill these in after deploying the worker) ──
+const WORKER_URL      = 'https://dashboard-push.arise042706.workers.dev';
+const VAPID_PUBLIC_KEY = 'BAUaXEC2Wu7v3b63Bct4H-jrVfkRvTnK3N7q6P8sjkM0UEhgtbTUX7_6FPQCgvvEK57KKYxAJupbBo0Kc6A8Nzw';
+
 // ─── CONSTANTS ────────────────────────────────────────────
 const CIRC = 502.65; // 2π × 80
 const DAY_TYPES = ['Full Day','Rest Day','Active Recovery','Travel Day','Light Day'];
 const PLATFORM_NAMES = ['TikTok','Instagram','YouTube','Twitter/X','LinkedIn','Facebook'];
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ─── PUSH SUBSCRIPTION ────────────────────────────────────
+let _pushUserId = null;
+let _pushReady  = false;
+
+function getPushUserId() {
+  let id = localStorage.getItem('push-uid');
+  if (!id) { id = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('push-uid', id); }
+  return id;
+}
+
+function _b64urlToUint8(b64) {
+  const s = atob(b64.replace(/-/g,'+').replace(/_/g,'/'));
+  return Uint8Array.from(s, c => c.charCodeAt(0));
+}
+
+function _workerReady() {
+  return !!(WORKER_URL && VAPID_PUBLIC_KEY && WORKER_URL.length > 10);
+}
+
+async function setupPushSubscription() {
+  if (!_workerReady()) return;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: _b64urlToUint8(VAPID_PUBLIC_KEY),
+      });
+    }
+    _pushUserId = getPushUserId();
+    await fetch(`${WORKER_URL}/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: sub.toJSON(), userId: _pushUserId }),
+    });
+    _pushReady = true;
+    console.log('[Push] Subscription active');
+  } catch(e) {
+    console.warn('[Push] Setup failed:', e.message);
+  }
+}
+
+async function _remoteSched(notifications) {
+  if (!_pushReady || !_pushUserId) return;
+  try {
+    await fetch(`${WORKER_URL}/schedule`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: _pushUserId, notifications }),
+    });
+  } catch(e) { console.warn('[Push] Schedule failed:', e.message); }
+}
+
+async function _remoteCancel(ids) {
+  if (!_pushReady || !_pushUserId || !ids.length) return;
+  try {
+    await fetch(`${WORKER_URL}/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    });
+  } catch(e) {}
+}
 
 // ─── STATE ────────────────────────────────────────────────
 const KEY = 'pd-v1';
@@ -1040,6 +1111,14 @@ function startGoalTimer(minutes) {
   activeGoalTimers[goalId] = { endTime, intervalId, minutes };
   closeOverlay('overlay-timer');
   _timerTargetGoalId = null;
+  // Schedule remote push so notification fires even if phone is locked
+  const goal = S.goals.find(g => g.id === goalId);
+  _remoteSched([{
+    id: `goal-timer-${goalId}`,
+    sendAt: endTime,
+    title: '⏱ Focus session done!',
+    body: goal ? `Time's up for: "${goal.text}"` : 'Your focus session ended.',
+  }]);
   renderGoals();
 }
 
@@ -1048,6 +1127,7 @@ function stopGoalTimer(goalId) {
   if (!timer) return;
   clearInterval(timer.intervalId);
   delete activeGoalTimers[goalId];
+  _remoteCancel([`goal-timer-${goalId}`]); // cancel the push if stopped early
   renderGoals();
 }
 
@@ -1081,40 +1161,64 @@ function clearBlockTimers() {
   _blockTimers = [];
 }
 
+let _pendingBlockNotifIds = [];
+
 function scheduleBlockNotifs() {
   clearBlockTimers();
+  // Cancel previously scheduled remote block notifications
+  _remoteCancel(_pendingBlockNotifIds);
+  _pendingBlockNotifIds = [];
+
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   const now = new Date();
+  const nowMs = now.getTime();
+  const remoteNotifs = [];
+
   S.schedule.forEach(block => {
     if (!block.start) return;
-    // Start notification
     const [sh, sm] = block.start.split(':').map(Number);
     const startAt = new Date(); startAt.setHours(sh, sm, 0, 0);
     const startDelay = startAt - now;
+
     if (startDelay > 0) {
+      // Local fallback (fires if app is open)
       _blockTimers.push(setTimeout(() => {
         new Notification('⏰ ' + block.label + ' is starting', {
-          body: block.end ? `Runs until ${fmtTime(block.end)}` : 'Your block is starting now.',
-          tag: 'block-start-' + block.id,
-          requireInteraction: false,
+          body: block.end ? `Runs until ${fmtTime(block.end)}` : 'Your block starts now.',
+          tag: 'block-start-' + block.id, requireInteraction: false,
         });
       }, startDelay));
+      // Remote push (fires even if phone is locked)
+      const id = `block-start-${block.id}`;
+      remoteNotifs.push({ id, sendAt: startAt.getTime(),
+        title: '⏰ ' + block.label + ' is starting',
+        body: block.end ? `Runs until ${fmtTime(block.end)}` : 'Your block starts now.',
+      });
+      _pendingBlockNotifIds.push(id);
     }
-    // End notification
+
     if (!block.end) return;
     const [eh, em] = block.end.split(':').map(Number);
     const endAt = new Date(); endAt.setHours(eh, em, 0, 0);
     const endDelay = endAt - now;
+
     if (endDelay > 0) {
       _blockTimers.push(setTimeout(() => {
         new Notification('✅ ' + block.label + ' just ended', {
           body: 'Time block complete.',
-          tag: 'block-end-' + block.id,
-          requireInteraction: false,
+          tag: 'block-end-' + block.id, requireInteraction: false,
         });
       }, endDelay));
+      const id = `block-end-${block.id}`;
+      remoteNotifs.push({ id, sendAt: endAt.getTime(),
+        title: '✅ ' + block.label + ' just ended',
+        body: 'Time block complete.',
+      });
+      _pendingBlockNotifIds.push(id);
     }
   });
+
+  if (remoteNotifs.length) _remoteSched(remoteNotifs);
 }
 
 // ─── RENDER MAIN (progress hub) ───────────────────────────
@@ -1558,6 +1662,7 @@ async function requestNotifPermission() {
     save();
     scheduleNotifications();
     updateNotifUI();
+    setupPushSubscription();
   }
   return result;
 }
@@ -1705,6 +1810,7 @@ if (!S.name) {
   applyTabVisibility();
   scheduleNotifications();
   scheduleBlockNotifs();
+  setupPushSubscription();
 }
 </script>
 </body>
