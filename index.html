@@ -6,6 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Dashboard">
+  <link id="app-icon" rel="apple-touch-icon" sizes="1024x1024">
   <title>My Dashboard</title>
 <style>
 /* ── RESET & TOKENS ─────────────────────────────────────── */
@@ -575,6 +576,89 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 </div>
 
 <script>
+// ─── APP ICON (generated via canvas, no extra files needed) ──
+(function generateIcon() {
+  const S = 1024;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const ctx = c.getContext('2d');
+
+  // Deep dark background with subtle radial glow in center
+  const bg = ctx.createRadialGradient(512, 420, 60, 512, 420, 640);
+  bg.addColorStop(0, '#1a0505');
+  bg.addColorStop(1, '#080810');
+  ctx.fillStyle = bg;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(0, 0, S, S, 180);
+  else ctx.rect(0, 0, S, S);
+  ctx.fill();
+
+  // Lightning bolt path (sharp, angular, powerful)
+  const bolt = () => {
+    ctx.beginPath();
+    ctx.moveTo(600, 72);   // top point
+    ctx.lineTo(348, 530);  // mid-left
+    ctx.lineTo(504, 530);  // mid-right notch
+    ctx.lineTo(392, 952);  // bottom point
+    ctx.lineTo(692, 452);  // right side up
+    ctx.lineTo(524, 452);  // left notch up
+    ctx.closePath();
+  };
+
+  // Outer glow (wide, soft)
+  ctx.save();
+  ctx.shadowColor = '#cc0000';
+  ctx.shadowBlur = 120;
+  ctx.fillStyle = '#ff0000';
+  bolt(); ctx.fill();
+  bolt(); ctx.fill();
+  ctx.restore();
+
+  // Inner glow (tight, bright)
+  ctx.save();
+  ctx.shadowColor = '#ff4444';
+  ctx.shadowBlur = 40;
+  ctx.fillStyle = '#ff2222';
+  bolt(); ctx.fill();
+  ctx.restore();
+
+  // Main bolt — deep crimson gradient top to bottom
+  const g = ctx.createLinearGradient(512, 72, 512, 952);
+  g.addColorStop(0,   '#ff5555');
+  g.addColorStop(0.3, '#e01010');
+  g.addColorStop(0.7, '#b00000');
+  g.addColorStop(1,   '#6a0000');
+  ctx.fillStyle = g;
+  bolt(); ctx.fill();
+
+  // Bright highlight edge — left face of bolt (gives 3D depth)
+  const hl = ctx.createLinearGradient(440, 72, 440, 530);
+  hl.addColorStop(0, 'rgba(255,160,160,0.55)');
+  hl.addColorStop(1, 'rgba(255,80,80,0.0)');
+  ctx.save();
+  ctx.strokeStyle = hl;
+  ctx.lineWidth = 12;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(600, 72);
+  ctx.lineTo(348, 530);
+  ctx.lineTo(504, 530);
+  ctx.stroke();
+  ctx.restore();
+
+  // Subtle shine dot at tip top
+  const shine = ctx.createRadialGradient(590, 100, 0, 590, 100, 60);
+  shine.addColorStop(0, 'rgba(255,220,220,0.7)');
+  shine.addColorStop(1, 'rgba(255,80,80,0)');
+  ctx.fillStyle = shine;
+  ctx.beginPath();
+  ctx.arc(590, 110, 60, 0, Math.PI * 2);
+  ctx.fill();
+
+  const link = document.getElementById('app-icon');
+  if (link) link.href = c.toDataURL('image/png');
+})();
+
 // ─── CONSTANTS ────────────────────────────────────────────
 const CIRC = 502.65; // 2π × 80
 const DAY_TYPES = ['Full Day','Rest Day','Active Recovery','Travel Day','Light Day'];
