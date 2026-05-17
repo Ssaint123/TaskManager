@@ -1179,13 +1179,25 @@ function deleteBrand(id) {
 }
 
 // ─── RENDER FINANCES ──────────────────────────────────────
+function getAllFinanceEntries() {
+  // Merge personal finances + all brand finances, tagged with source
+  const m = new Date().getMonth(), yr = new Date().getFullYear();
+  const inMonth = e => { const d=new Date(e.date); return d.getMonth()===m && d.getFullYear()===yr; };
+
+  const personal = (S.finances||[]).filter(inMonth).map(e=>({ ...e, _source:'personal' }));
+
+  const brand = (S.brands||[]).flatMap(b=>
+    (b.finances||[]).filter(inMonth).map(e=>({ ...e, _source:'brand', _brandName: b.name }))
+  );
+
+  return [...personal, ...brand].sort((a,b)=>new Date(b.date)-new Date(a.date));
+}
+
 function renderFinances() {
-  const m = new Date().getMonth();
-  const yr = new Date().getFullYear();
-  const entries = S.finances.filter(e=>{ const d=new Date(e.date); return d.getMonth()===m && d.getFullYear()===yr; });
-  const income = entries.filter(e=>e.type==='income').reduce((a,e)=>a+Number(e.amount),0);
-  const expense = entries.filter(e=>e.type==='expense').reduce((a,e)=>a+Number(e.amount),0);
-  const profit = income-expense;
+  const allEntries = getAllFinanceEntries();
+  const income  = allEntries.filter(e=>e.type==='income').reduce((a,e)=>a+Number(e.amount),0);
+  const expense = allEntries.filter(e=>e.type==='expense').reduce((a,e)=>a+Number(e.amount),0);
+  const profit  = income - expense;
 
   document.getElementById('fin-income').textContent = '$'+income.toFixed(2);
   document.getElementById('fin-expense').textContent = '$'+expense.toFixed(2);
@@ -1193,12 +1205,11 @@ function renderFinances() {
   profEl.textContent = (profit>=0?'+$':'-$')+Math.abs(profit).toFixed(2);
   profEl.style.color = profit>=0?'var(--green)':'var(--red)';
 
-  // Tax calculation
+  // Tax calculation (on income only)
   const taxRow = document.getElementById('fin-tax-row');
   let taxOwed = 0, effectiveRate = 0;
   if ((S.taxMode||'auto') === 'auto') {
-    const annual = income * 12;
-    const res = calcFederalTax(annual, S.filingStatus||'single', S.selfEmployed!==false);
+    const res = calcFederalTax(income * 12, S.filingStatus||'single', S.selfEmployed!==false);
     taxOwed = res.totalTax / 12;
     effectiveRate = res.effectiveRate;
   } else {
@@ -1235,22 +1246,31 @@ function renderFinances() {
     fundsEl.innerHTML = '';
   }
 
+  // Entry list
   const list = document.getElementById('finance-list');
   const empty = document.getElementById('finance-empty');
-  if (!entries.length) { list.innerHTML=''; empty.style.display='block'; return; }
+  if (!allEntries.length) { list.innerHTML=''; empty.style.display='block'; return; }
   empty.style.display='none';
-  list.innerHTML = entries.map(e=>`
-    <div class="finance-entry">
+  list.innerHTML = allEntries.map(e=>{
+    const isBrand = e._source === 'brand';
+    const label = isBrand
+      ? `<span style="color:var(--t2);font-size:11px;">Brand · ${escHtml(e._brandName)}</span><br>${escHtml(e.label||'Entry')}`
+      : escHtml(e.label||'Entry');
+    const delBtn = isBrand
+      ? '' // brand entries deleted from the Brand tab
+      : `<button class="finance-del" data-fin-del="${e.id}">×</button>`;
+    return `<div class="finance-entry">
       <div class="finance-type-dot" style="background:${e.type==='income'?'var(--green)':'var(--red)'}"></div>
       <div class="finance-info">
-        <div class="finance-entry-label">${escHtml(e.label||'Entry')}</div>
+        <div class="finance-entry-label">${label}</div>
         <div class="finance-entry-date">${new Date(e.date).toLocaleDateString()}</div>
       </div>
       <div class="finance-amount" style="color:${e.type==='income'?'var(--green)':'var(--red)'}">
         ${e.type==='income'?'+':'-'}$${Number(e.amount).toFixed(2)}
       </div>
-      <button class="finance-del" data-fin-del="${e.id}">×</button>
-    </div>`).join('');
+      ${delBtn}
+    </div>`;
+  }).join('');
 }
 
 // ─── US FEDERAL TAX CALCULATOR (2025 IRS brackets) ────────
@@ -1936,7 +1956,7 @@ document.getElementById('save-finance-btn').onclick=()=>{
     const brand=S.brands.find(b=>b.id===activeBrandFinanceId);
     if(brand){if(!brand.finances)brand.finances=[];brand.finances.push(entry);}
     activeBrandFinanceId=null;
-    save(); closeOverlay('overlay-finance'); renderBrands();
+    save(); closeOverlay('overlay-finance'); renderBrands(); renderFinances();
   } else {
     S.finances.push(entry);
     save(); closeOverlay('overlay-finance'); renderFinances();
