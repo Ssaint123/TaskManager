@@ -220,6 +220,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 .fund-item-name{font-size:15px;font-weight:500;}
 .fund-item-pct{font-size:12px;color:var(--t2);}
 .fund-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:2px 4px;}
+.tax-exempt-badge{background:var(--green-d);color:var(--green);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:0.3px;vertical-align:middle;}
 .funds-breakdown-card{background:var(--s1);border-radius:12px;padding:14px;margin-bottom:14px;}
 .funds-breakdown-title{font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--t2);margin-bottom:10px;}
 .fund-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
@@ -607,7 +608,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
               </select>
             </div>
           </div>
-          <button class="sheet-save" id="confirm-add-fund-btn" style="width:100%;margin-top:4px;">Add Fund</button>
+          <div class="se-toggle-row" style="margin-top:10px;">
+            <div>
+              <div style="font-size:14px;font-weight:600;">Tax Exempt</div>
+              <div style="font-size:11px;color:var(--t2);margin-top:2px;">Deducted from income before tax (e.g. Tithe)</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="fund-tax-exempt">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+          <button class="sheet-save" id="confirm-add-fund-btn" style="width:100%;margin-top:12px;">Add Fund</button>
         </div>
       </div>
     </div>
@@ -1211,16 +1222,22 @@ function renderFinances() {
   profEl.textContent = (profit>=0?'+$':'-$')+Math.abs(profit).toFixed(2);
   profEl.style.color = profit>=0?'var(--green)':'var(--red)';
 
-  // Tax calculation (on income only)
+  // Tax-exempt fund deductions (e.g. Tithe)
+  const exemptDeduction = (S.funds||[])
+    .filter(f=>f.taxExempt)
+    .reduce((a,f)=>a + income*(Number(f.percent)/100), 0);
+  const taxableIncome = Math.max(0, income - exemptDeduction);
+
+  // Tax calculation
   const taxRow = document.getElementById('fin-tax-row');
   let taxOwed = 0, effectiveRate = 0;
   if ((S.taxMode||'auto') === 'auto') {
-    const res = calcFederalTax(income * 12, S.filingStatus||'single', S.selfEmployed!==false);
+    const res = calcFederalTax(taxableIncome * 12, S.filingStatus||'single', S.selfEmployed!==false);
     taxOwed = res.totalTax / 12;
     effectiveRate = res.effectiveRate;
   } else {
     const taxRate = Number(S.taxRate)||0;
-    taxOwed = income * (taxRate/100);
+    taxOwed = taxableIncome * (taxRate/100);
     effectiveRate = taxRate;
   }
   const hasIncome = income > 0;
@@ -1355,12 +1372,15 @@ function _updateTaxPreview() {
   if (monthIncome <= 0) { box.style.display='none'; return; }
   const fs = document.querySelector('[data-filing].active')?.dataset.filing || 'single';
   const se = document.getElementById('se-toggle').checked;
-  const annual = monthIncome * 12;
-  const res = calcFederalTax(annual, fs, se);
+  const exemptAmt = (S.funds||[]).filter(f=>f.taxExempt).reduce((a,f)=>a+monthIncome*(Number(f.percent)/100),0);
+  const taxableAmt = Math.max(0, monthIncome - exemptAmt);
+  const res = calcFederalTax(taxableAmt * 12, fs, se);
   const monthlyTotal = res.totalTax / 12;
   box.style.display='block';
   document.getElementById('tax-preview-rows').innerHTML = `
     <div class="tax-prev-row"><span>This month's income</span><span style="color:var(--green)">$${monthIncome.toFixed(2)}</span></div>
+    ${exemptAmt>0?`<div class="tax-prev-row"><span>Tax-exempt deductions</span><span style="color:var(--gold)">−$${exemptAmt.toFixed(2)}</span></div>`:''}
+    ${exemptAmt>0?`<div class="tax-prev-row"><span>Taxable income</span><span>$${taxableAmt.toFixed(2)}</span></div>`:''}
     ${se?`<div class="tax-prev-row"><span>SE Tax (monthly est.)</span><span style="color:var(--orange)">$${(res.seTax/12).toFixed(2)}</span></div>`:''}
     <div class="tax-prev-row"><span>Income Tax (monthly est.)</span><span style="color:var(--orange)">$${(res.incomeTax/12).toFixed(2)}</span></div>
     <div class="tax-prev-row" style="font-weight:700;border-top:0.5px solid var(--border);padding-top:8px;margin-top:4px;">
@@ -1378,7 +1398,7 @@ function renderFundsSettings() {
     <div class="fund-item">
       <div class="fund-dot" style="background:${f.color||'var(--gold)'}"></div>
       <div class="fund-item-info">
-        <div class="fund-item-name">${escHtml(f.name)}</div>
+        <div class="fund-item-name">${escHtml(f.name)}${f.taxExempt?` <span class="tax-exempt-badge">Tax Exempt</span>`:''}</div>
         <div class="fund-item-pct">${f.percent}% of income</div>
       </div>
       <button class="fund-del" data-fund-del="${f.id}">×</button>
@@ -1422,6 +1442,8 @@ document.getElementById('fund-name-presets').addEventListener('click', e=>{
   if (!chip) return;
   document.getElementById('fund-name').value = chip.dataset.name;
   document.getElementById('fund-pct').value = chip.dataset.pct;
+  // Auto-mark Tithe as tax exempt
+  document.getElementById('fund-tax-exempt').checked = chip.dataset.name === 'Tithe';
 });
 
 // Add fund form toggle
@@ -1432,6 +1454,7 @@ document.getElementById('add-fund-btn').addEventListener('click', ()=>{
     document.getElementById('fund-name').value='';
     document.getElementById('fund-pct').value='';
     document.getElementById('fund-color').value='var(--gold)';
+    document.getElementById('fund-tax-exempt').checked=false;
   }
 });
 
@@ -1440,9 +1463,10 @@ document.getElementById('confirm-add-fund-btn').addEventListener('click', ()=>{
   const name = document.getElementById('fund-name').value.trim();
   const pct = parseFloat(document.getElementById('fund-pct').value);
   const color = document.getElementById('fund-color').value;
+  const taxExempt = document.getElementById('fund-tax-exempt').checked;
   if (!name || isNaN(pct) || pct<=0) return;
   if (!S.funds) S.funds=[];
-  S.funds.push({ id:uid(), name, percent:pct, color });
+  S.funds.push({ id:uid(), name, percent:pct, color, taxExempt });
   save();
   document.getElementById('add-fund-form').style.display='none';
   renderFundsSettings();
