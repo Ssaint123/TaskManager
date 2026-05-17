@@ -59,9 +59,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 .header-icon-btn{width:32px;height:32px;border-radius:50%;background:var(--s2);border:none;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .header-icon-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 #views{flex:1;overflow:hidden;position:relative;}
-.view{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px calc(var(--nav-h) + max(env(safe-area-inset-bottom), 20px) + 14px);display:none;}
+.view{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px);display:none;}
 .view.active{display:block;}
-#bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:90;height:calc(var(--nav-h) + max(env(safe-area-inset-bottom), 20px));padding-bottom:max(env(safe-area-inset-bottom), 20px);background:var(--s1);border-top:0.5px solid var(--border);display:flex;align-items:stretch;}
+#bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:90;background:var(--s1);border-top:0.5px solid var(--border);display:flex;flex-direction:column;}
+#nav-tab-row{display:flex;height:var(--nav-h);}
+#nav-safe-area{height:constant(safe-area-inset-bottom);height:env(safe-area-inset-bottom);min-height:0;}
 .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:var(--t3);font-size:10px;font-weight:600;letter-spacing:0.4px;cursor:pointer;transition:color .2s;}
 .nav-tab.active{color:var(--green);}
 .nav-tab svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s;}
@@ -181,7 +183,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 .finance-summary{display:flex;gap:10px;margin-bottom:14px;}
 .finance-sum-card{flex:1;background:var(--s2);border-radius:12px;padding:14px;}
 .finance-sum-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:6px;}
-.finance-sum-val{font-size:26px;font-weight:800;letter-spacing:-1px;}
+.finance-sum-val{font-size:clamp(14px,5.5vw,26px);font-weight:800;letter-spacing:-0.5px;word-break:break-all;}
 .finance-entry{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--s1);border-radius:10px;margin-bottom:6px;}
 .finance-type-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .finance-info{flex:1;}
@@ -415,21 +417,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 
   <!-- ── BOTTOM NAV ─────────────────────────────────────── -->
   <nav id="bottom-nav" style="display:none">
-    <button class="nav-tab active" data-view="main">
-      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Main
-    </button>
-    <button class="nav-tab" data-view="finances">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h4.5a1.5 1.5 0 010 3h-3a1.5 1.5 0 000 3H15"/></svg>Finances
-    </button>
-    <button class="nav-tab" data-view="brand">
-      <svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>Brand
-    </button>
-    <button class="nav-tab" data-view="health">
-      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Health
-    </button>
-    <button class="nav-tab" data-view="goals">
-      <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Goals
-    </button>
+    <div id="nav-tab-row">
+      <button class="nav-tab active" data-view="main">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Main
+      </button>
+      <button class="nav-tab" data-view="finances">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h4.5a1.5 1.5 0 010 3h-3a1.5 1.5 0 000 3H15"/></svg>Finances
+      </button>
+      <button class="nav-tab" data-view="brand">
+        <svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>Brand
+      </button>
+      <button class="nav-tab" data-view="health">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Health
+      </button>
+      <button class="nav-tab" data-view="goals">
+        <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Goals
+      </button>
+    </div>
+    <div id="nav-safe-area"></div>
   </nav>
 
 </div><!-- /app -->
