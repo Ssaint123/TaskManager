@@ -191,6 +191,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 .finance-entry-date{font-size:12px;color:var(--t2);}
 .finance-amount{font-size:16px;font-weight:700;}
 .finance-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:2px 4px;}
+.finance-edit{background:none;border:none;color:var(--t2);cursor:pointer;font-size:15px;padding:2px 6px;flex-shrink:0;}
 
 /* ── TAX & FUNDS ─────────────────────────────────────────── */
 .tax-mode-toggle{display:flex;background:var(--s2);border-radius:12px;padding:4px;gap:4px;margin-bottom:2px;}
@@ -270,6 +271,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 .goal-timer-stop{background:var(--red-d);border:none;border-radius:6px;color:var(--red);cursor:pointer;font-size:11px;font-weight:700;padding:4px 7px;line-height:1;}
 .timer-preset-btn{padding:14px 10px;background:var(--s2);border:0.5px solid var(--border);border-radius:10px;color:var(--t1);font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;}
 .timer-preset-btn:active{background:var(--blue-d);border-color:var(--blue);color:var(--blue);}
+
+/* ── PRIORITY DOT ────────────────────────────────────────── */
+.priority-dot{width:12px;height:12px;min-width:12px;border-radius:50%;border:1.5px solid var(--t3);background:none;cursor:pointer;flex-shrink:0;margin-top:5px;transition:all .2s;}
+.priority-dot.priority-high{background:var(--red);border-color:var(--red);}
+.priority-dot.priority-medium{background:var(--orange);border-color:var(--orange);}
+.priority-dot.priority-low{background:var(--blue);border-color:var(--blue);}
+
+/* ── FINANCIAL PERIOD CHIPS ──────────────────────────────── */
+.fin-period-row{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.fin-period-row::-webkit-scrollbar{display:none;}
+.fin-period-chip{background:var(--s2);border:1.5px solid var(--border);border-radius:20px;color:var(--t2);font-size:12px;font-weight:600;padding:7px 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.fin-period-chip.active{background:var(--blue-d);border-color:var(--blue);color:var(--blue);}
+
+/* ── ACCOUNT FILTER CHIPS ─────────────────────────────────── */
+.fin-account-chip{background:var(--s2);border:1.5px solid var(--border);border-radius:20px;color:var(--t2);font-size:12px;font-weight:600;padding:6px 12px;cursor:pointer;white-space:nowrap;}
+.fin-account-chip.active{background:var(--s3);border-color:var(--t2);color:var(--t1);}
+
+/* ── GOAL GROUPS ─────────────────────────────────────────── */
+.goal-groups-row{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:14px;padding-bottom:2px;}
+.goal-groups-row::-webkit-scrollbar{display:none;}
+.goal-group-chip{background:var(--s2);border:1.5px solid var(--border);border-radius:20px;color:var(--t2);font-size:12px;font-weight:700;padding:8px 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.goal-group-chip.active{background:var(--orange-d);border-color:var(--orange);color:var(--orange);}
+.goal-group-add{color:var(--t3);border-style:dashed;}
+.gg-reset-label{font-size:9px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:inherit;opacity:0.7;}
 
 /* ── ADD BRAND PLATFORM LIST ─────────────────────────────── */
 .plat-list{display:flex;flex-direction:column;gap:8px;}
@@ -353,6 +378,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 
     <!-- GOALS -->
     <div class="view" id="view-goals">
+      <div class="goal-groups-row" id="goal-groups-row">
+        <button class="goal-group-chip active" data-ggroup="daily">⚡ Daily</button>
+        <button class="goal-group-chip goal-group-add" id="add-goal-group-btn">+ Group</button>
+      </div>
       <div class="card">
         <div class="sec" style="letter-spacing:2px;font-size:12px;color:var(--orange);">⚡ Goalmaxxing</div>
         <div class="goal-header">
@@ -408,8 +437,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
           <div class="finance-sum-val" id="fin-net">$0</div>
         </div>
       </div>
+      <div class="fin-period-row" id="fin-period-row">
+        <button class="fin-period-chip active" data-period="month">This Month</button>
+        <button class="fin-period-chip" data-period="ytd">YTD</button>
+        <button class="fin-period-chip" data-period="year">1 Year</button>
+        <button class="fin-period-chip" data-period="pick">📅 Pick</button>
+      </div>
+      <div id="fin-pick-wrap" style="display:none;">
+        <div class="row-2" style="margin-bottom:12px;">
+          <select class="field-select" id="fin-pick-month">
+            <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+            <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+            <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+            <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+          </select>
+          <select class="field-select" id="fin-pick-year"></select>
+        </div>
+      </div>
+      <div id="fin-account-row" style="display:none;margin-bottom:12px;"></div>
       <div id="funds-breakdown"></div>
-      <div class="sec">This Month <div class="sec-actions"><span class="sec-action" id="open-tax-funds-btn" style="color:var(--t2);">⚙ Tax &amp; Funds</span><span class="sec-action" id="add-finance-btn">+ Add Entry</span></div></div>
+      <div class="sec"><span id="fin-period-label">This Month</span> <div class="sec-actions"><span class="sec-action" id="open-account-btn" style="color:var(--t2);">+ Account</span><span class="sec-action" id="open-tax-funds-btn" style="color:var(--t2);">⚙ Tax &amp; Funds</span><span class="sec-action" id="add-finance-btn">+ Add Entry</span></div></div>
       <div id="finance-list"></div>
       <div id="finance-empty" style="color:var(--t3);font-size:13px;text-align:center;padding:30px 0;display:none;">No entries yet</div>
     </div>
@@ -505,6 +552,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
   </div>
 </div>
 
+<!-- Add Account -->
+<div class="overlay" id="overlay-account">
+  <div class="overlay-bg"></div>
+  <div class="sheet">
+    <div class="sheet-header">
+      <button class="sheet-cancel" data-close="overlay-account">Cancel</button>
+      <div class="sheet-title">Add Account</div>
+      <button class="sheet-save" id="save-account-btn">Add</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field-group"><div class="field-label">Account Name</div><input class="field-input" id="acc-name" type="text" placeholder="e.g. Personal, Business LLC, Side Hustle"></div>
+      <div class="field-group"><div class="field-label">Color</div>
+        <select class="field-select" id="acc-color">
+          <option value="var(--blue)">Blue</option>
+          <option value="var(--green)">Green</option>
+          <option value="var(--orange)">Orange</option>
+          <option value="var(--gold)">Gold</option>
+          <option value="var(--red)">Red</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Add Finance -->
 <div class="overlay" id="overlay-finance">
   <div class="overlay-bg"></div>
@@ -516,6 +587,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
           <option value="income">Income</option>
           <option value="expense">Expense</option>
         </select>
+      </div>
+      <div class="field-group" id="f-account-group"><div class="field-label">Account</div>
+        <select class="field-select" id="f-account"><option value="">Personal</option></select>
       </div>
       <div class="field-group"><div class="field-label">Label</div><input class="field-input" id="f-label" type="text" placeholder="e.g. TikTok Creator Fund"></div>
       <div class="field-group"><div class="field-label">Amount ($)</div><input class="field-input" id="f-amount" type="number" step="0.01" placeholder="0.00"></div>
@@ -620,6 +694,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
           </div>
           <button class="sheet-save" id="confirm-add-fund-btn" style="width:100%;margin-top:12px;">Add Fund</button>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Goal Group -->
+<div class="overlay" id="overlay-goal-group">
+  <div class="overlay-bg"></div>
+  <div class="sheet">
+    <div class="sheet-header">
+      <button class="sheet-cancel" data-close="overlay-goal-group">Cancel</button>
+      <div class="sheet-title">New Goal Group</div>
+      <button class="sheet-save" id="save-goal-group-btn">Create</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field-group"><div class="field-label">Name</div><input class="field-input" id="gg-name" type="text" placeholder="e.g. Fitness, Weekly Review, Business"></div>
+      <div class="field-group"><div class="field-label">Resets</div>
+        <select class="field-select" id="gg-reset">
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly (every Monday)</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+      <div class="field-group"><div class="field-label">Color</div>
+        <select class="field-select" id="gg-color">
+          <option value="var(--green)">Green</option>
+          <option value="var(--blue)">Blue</option>
+          <option value="var(--orange)">Orange</option>
+          <option value="var(--gold)">Gold</option>
+          <option value="var(--red)">Red</option>
+        </select>
       </div>
     </div>
   </div>
@@ -933,6 +1038,8 @@ function defaultState() {
     filingStatus: 'single',
     selfEmployed: true,
     funds: [],
+    accounts: [],
+    goalGroups: [],
     schedule: [],
     notifPrefs: { enabled: false, morning: '08:00', midday: '12:00', evening: '20:00' },
     hiddenTabs: [],
@@ -946,6 +1053,8 @@ function load() {
   if (!S.goalStreak) S.goalStreak = 0;
   if (!S.notifPrefs) S.notifPrefs = { enabled: false, morning: '08:00', midday: '12:00', evening: '20:00' };
   if (!S.hiddenTabs) S.hiddenTabs = [];
+  if (!S.accounts) S.accounts = [];
+  if (!S.goalGroups) S.goalGroups = [];
 }
 
 function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
@@ -1067,20 +1176,60 @@ function checkGoalStreak() {
   }
 }
 
+// ─── GOAL GROUP HELPERS ───────────────────────────────────
+function getPeriodKey(resetType) {
+  const d = new Date();
+  if (resetType === 'weekly') {
+    const day = d.getDay(); const diff = d.getDate() - day + (day===0?-6:1);
+    return new Date(d.getFullYear(), d.getMonth(), diff).toISOString().slice(0,10);
+  }
+  if (resetType === 'monthly') return today().slice(0,7)+'-01';
+  return today();
+}
+
+function getActiveGroupResetType() {
+  if (_activeGoalGroup === 'daily') return 'daily';
+  const g = (S.goalGroups||[]).find(g=>g.id===_activeGoalGroup);
+  return g ? g.resetType : 'daily';
+}
+
+function renderGoalGroups() {
+  const row = document.getElementById('goal-groups-row');
+  if (!row) return;
+  const isDailyActive = _activeGoalGroup === 'daily';
+  let html = `<button class="goal-group-chip${isDailyActive?' active':''}" data-ggroup="daily">⚡ Daily</button>`;
+  (S.goalGroups||[]).forEach(g => {
+    const isActive = _activeGoalGroup === g.id;
+    html += `<button class="goal-group-chip${isActive?' active':''}" data-ggroup="${g.id}" style="${isActive?'border-color:'+g.color+';color:'+g.color:''}">${escHtml(g.name)}<span class="gg-reset-label">${g.resetType}</span></button>`;
+  });
+  html += `<button class="goal-group-chip goal-group-add" id="add-goal-group-btn">+ Group</button>`;
+  row.innerHTML = html;
+  document.getElementById('add-goal-group-btn').onclick = ()=>{ document.getElementById('gg-name').value=''; openOverlay('overlay-goal-group'); };
+}
+
 function renderGoals() {
   checkGoalStreak();
-  const t = today();
-  const todayGoals = S.goals.filter(g=>g.date===t);
-  const done = todayGoals.filter(g=>g.done).length;
-  const total = todayGoals.length;
+  renderGoalGroups();
+  const resetType = getActiveGroupResetType();
+  const periodKey = getPeriodKey(resetType);
+  const PRIORITY_ORDER = ['high','medium','low',null,undefined];
+  const groupGoals = S.goals.filter(g=>(g.groupId||'daily')===_activeGoalGroup && g.date===periodKey);
+  const sorted = [...groupGoals].sort((a,b)=>PRIORITY_ORDER.indexOf(a.priority)-PRIORITY_ORDER.indexOf(b.priority));
+  const done = sorted.filter(g=>g.done).length;
+  const total = sorted.length;
 
-  document.getElementById('goal-date').textContent = 'Today — '+todayLabel().toUpperCase();
+  // Update date label based on resetType
+  let dateLabel;
+  if (resetType === 'weekly') dateLabel = 'This Week';
+  else if (resetType === 'monthly') dateLabel = 'This Month';
+  else dateLabel = 'Today — '+todayLabel().toUpperCase();
+  document.getElementById('goal-date').textContent = dateLabel;
   document.getElementById('goal-count-done').textContent = done;
   document.getElementById('goal-count-total').textContent = `/ ${total} complete`;
   document.getElementById('streak-badge').textContent = `⚡ ${S.goalStreak||0} day streak`;
 
   const list = document.getElementById('goal-list');
-  list.innerHTML = todayGoals.map(g=>{
+  list.innerHTML = sorted.map(g=>{
     const timer = activeGoalTimers[g.id];
     const timerHtml = timer
       ? `<div class="goal-timer-active">
@@ -1088,14 +1237,15 @@ function renderGoals() {
            <button class="goal-timer-stop" onclick="stopGoalTimer('${g.id}')">■</button>
          </div>`
       : `<button class="goal-timer-btn" onclick="openGoalTimer('${g.id}')" title="Focus timer">⏱</button>`;
+    const pClass = g.priority ? `priority-${g.priority}` : '';
     return `<div class="goal-item ${g.done?'done':''}" data-id="${g.id}">
+      <button class="priority-dot ${pClass}" data-priority="${g.id}"></button>
       <button class="goal-check ${g.done?'done':''}" data-id="${g.id}"></button>
       <div class="goal-text">${escHtml(g.text)}</div>
       ${timerHtml}
       <button class="goal-del" data-del="${g.id}">×</button>
     </div>`;
   }).join('');
-
 }
 
 // ─── RENDER BRANDS ────────────────────────────────────────
@@ -1159,6 +1309,13 @@ function renderBrands() {
 
 let activeBrandFinanceId = null;
 let activeUpdateFollowersId = null;
+let _editFinanceId = null;
+let _editFinanceSource = 'personal';
+let _finPeriod = 'month';
+let _finCustomMonth = null;
+let _finCustomYear = null;
+let _finAccount = 'all';
+let _activeGoalGroup = 'daily';
 
 function openUpdateFollowers(brandId) {
   activeUpdateFollowersId = brandId;
@@ -1179,8 +1336,14 @@ function openUpdateFollowers(brandId) {
 
 function openAddBrandFinance(brandId) {
   activeBrandFinanceId = brandId;
+  _editFinanceId = null;
+  _editFinanceSource = 'personal';
   document.getElementById('f-label').value='';
   document.getElementById('f-amount').value='';
+  document.querySelector('#overlay-finance .sheet-title').textContent='Add Entry';
+  document.getElementById('save-finance-btn').textContent='Add';
+  populateAccountSelect();
+  if (document.getElementById('f-account')) document.getElementById('f-account').value='';
   openOverlay('overlay-finance');
 }
 
@@ -1191,18 +1354,52 @@ function deleteBrand(id) {
 
 // ─── RENDER FINANCES ──────────────────────────────────────
 function getAllFinanceEntries() {
-  const m = new Date().getMonth(), yr = new Date().getFullYear();
-  const inMonth = e => {
-    if (!e || !e.date) return false;
-    const d = new Date(e.date);
-    return !isNaN(d) && d.getMonth()===m && d.getFullYear()===yr;
+  const now = new Date();
+  const curM = now.getMonth(), curYr = now.getFullYear();
+
+  let inPeriod;
+  if (_finPeriod === 'month') {
+    inPeriod = e => {
+      if (!e || !e.date) return false;
+      const d = new Date(e.date);
+      return !isNaN(d) && d.getMonth()===curM && d.getFullYear()===curYr;
+    };
+  } else if (_finPeriod === 'ytd') {
+    inPeriod = e => {
+      if (!e || !e.date) return false;
+      const d = new Date(e.date);
+      return !isNaN(d) && d.getFullYear()===curYr;
+    };
+  } else if (_finPeriod === 'year') {
+    const cutoff = Date.now() - 365*24*60*60*1000;
+    inPeriod = e => {
+      if (!e || !e.date) return false;
+      const d = new Date(e.date);
+      return !isNaN(d) && d.getTime() >= cutoff;
+    };
+  } else if (_finPeriod === 'pick') {
+    const pm = _finCustomMonth !== null ? _finCustomMonth : curM;
+    const py = _finCustomYear !== null ? _finCustomYear : curYr;
+    inPeriod = e => {
+      if (!e || !e.date) return false;
+      const d = new Date(e.date);
+      return !isNaN(d) && d.getMonth()===pm && d.getFullYear()===py;
+    };
+  } else {
+    inPeriod = () => true;
+  }
+
+  const inAccount = e => {
+    if (_finAccount === 'all') return true;
+    if (_finAccount === 'personal') return !e.accountId;
+    return e.accountId === _finAccount;
   };
 
-  const personal = (S.finances||[]).filter(inMonth).map(e=>Object.assign({}, e, { _source:'personal' }));
+  const personal = (S.finances||[]).filter(e=>inPeriod(e)&&inAccount(e)).map(e=>Object.assign({}, e, { _source:'personal' }));
 
   const brand = [];
   (S.brands||[]).forEach(b => {
-    (b.finances||[]).filter(inMonth).forEach(e => {
+    (b.finances||[]).filter(e=>inPeriod(e)&&inAccount(e)).forEach(e => {
       brand.push(Object.assign({}, e, { _source:'brand', _brandName: b.name }));
     });
   });
@@ -1210,7 +1407,59 @@ function getAllFinanceEntries() {
   return personal.concat(brand).sort((a,b)=>new Date(b.date)-new Date(a.date));
 }
 
+function renderAccountFilter() {
+  const row = document.getElementById('fin-account-row');
+  if (!row) return;
+  if (!(S.accounts||[]).length) { row.style.display='none'; return; }
+  row.style.display='flex';
+  row.style.gap='6px';
+  row.style.overflowX='auto';
+  row.style.flexWrap='nowrap';
+  let html = `<button class="fin-account-chip${_finAccount==='all'?' active':''}" data-account="all">All</button>`;
+  html += `<button class="fin-account-chip${_finAccount==='personal'?' active':''}" data-account="personal">Personal</button>`;
+  (S.accounts||[]).forEach(a => {
+    const isActive = _finAccount === a.id;
+    html += `<button class="fin-account-chip${isActive?' active':''}" data-account="${a.id}" style="${isActive?'border-color:'+a.color+';color:'+a.color:''}">${escHtml(a.name)}</button>`;
+  });
+  row.innerHTML = html;
+  row.addEventListener('click', e=>{
+    const chip = e.target.closest('[data-account]');
+    if (!chip) return;
+    _finAccount = chip.dataset.account;
+    renderAccountFilter();
+    renderFinances();
+  });
+}
+
+function populateAccountSelect() {
+  const sel = document.getElementById('f-account');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Personal</option>';
+  (S.accounts||[]).forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.id;
+    opt.textContent = a.name;
+    sel.appendChild(opt);
+  });
+}
+
+function getFinPeriodLabel() {
+  if (_finPeriod === 'month') return 'This Month';
+  if (_finPeriod === 'ytd') return 'This Year';
+  if (_finPeriod === 'year') return 'Last 365 Days';
+  if (_finPeriod === 'pick') {
+    const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const pm = _finCustomMonth !== null ? _finCustomMonth : new Date().getMonth();
+    const py = _finCustomYear !== null ? _finCustomYear : new Date().getFullYear();
+    return MONTH_NAMES[pm] + ' ' + py;
+  }
+  return 'This Month';
+}
+
 function renderFinances() {
+  const periodLabelEl = document.getElementById('fin-period-label');
+  if (periodLabelEl) periodLabelEl.textContent = getFinPeriodLabel();
+  renderAccountFilter();
   const allEntries = getAllFinanceEntries();
   const income  = allEntries.filter(e=>e.type==='income').reduce((a,e)=>a+Number(e.amount),0);
   const expense = allEntries.filter(e=>e.type==='expense').reduce((a,e)=>a+Number(e.amount),0);
@@ -1279,6 +1528,7 @@ function renderFinances() {
     const label = isBrand
       ? `<span style="color:var(--t2);font-size:11px;">Brand · ${escHtml(e._brandName)}</span><br>${escHtml(e.label||'Entry')}`
       : escHtml(e.label||'Entry');
+    const editBtn = isBrand ? '' : `<button class="finance-edit" onclick="openEditFinance('${e.id}','${e._source}')">✎</button>`;
     const delBtn = isBrand
       ? '' // brand entries deleted from the Brand tab
       : `<button class="finance-del" data-fin-del="${e.id}">×</button>`;
@@ -1291,9 +1541,32 @@ function renderFinances() {
       <div class="finance-amount" style="color:${e.type==='income'?'var(--green)':'var(--red)'}">
         ${e.type==='income'?'+':'-'}$${Number(e.amount).toFixed(2)}
       </div>
+      ${editBtn}
       ${delBtn}
     </div>`;
   }).join('');
+}
+
+function openEditFinance(id, source) {
+  let entry;
+  if (source === 'personal') {
+    entry = (S.finances||[]).find(e=>e.id===id);
+  } else {
+    for (const b of (S.brands||[])) {
+      entry = (b.finances||[]).find(e=>e.id===id);
+      if (entry) break;
+    }
+  }
+  if (!entry) return;
+  _editFinanceId = id;
+  _editFinanceSource = source;
+  document.getElementById('f-type').value = entry.type||'income';
+  document.getElementById('f-label').value = entry.label||'';
+  document.getElementById('f-amount').value = entry.amount||'';
+  if (document.getElementById('f-account')) document.getElementById('f-account').value = entry.accountId||'';
+  document.querySelector('#overlay-finance .sheet-title').textContent = 'Edit Entry';
+  document.getElementById('save-finance-btn').textContent = 'Save';
+  openOverlay('overlay-finance');
 }
 
 // ─── US FEDERAL TAX CALCULATOR (2025 IRS brackets) ────────
@@ -1922,7 +2195,9 @@ function addGoal() {
   const input=document.getElementById('goal-input');
   const text=input.value.trim();
   if(!text) return;
-  S.goals.push({id:uid(),text,done:false,date:today()});
+  const resetType=getActiveGroupResetType();
+  const dateKey=getPeriodKey(resetType);
+  S.goals.push({id:uid(),text,done:false,date:dateKey,groupId:_activeGoalGroup,priority:null});
   input.value='';
   save(); renderGoals();
 }
@@ -1930,8 +2205,19 @@ function addGoal() {
 document.getElementById('goal-list').addEventListener('click',e=>{
   const check=e.target.closest('.goal-check');
   const del=e.target.closest('[data-del]');
+  const prio=e.target.closest('[data-priority]');
   if(check){ const id=check.dataset.id; const g=S.goals.find(g=>g.id===id); if(g){g.done=!g.done; save(); renderGoals();} }
   if(del){ S.goals=S.goals.filter(g=>g.id!==del.dataset.del); save(); renderGoals(); }
+  if(prio){
+    const id=prio.dataset.priority;
+    const g=S.goals.find(g=>g.id===id);
+    if(g){
+      const cycle=[null,'high','medium','low'];
+      const idx=cycle.indexOf(g.priority||null);
+      g.priority=cycle[(idx+1)%cycle.length];
+      save(); renderGoals();
+    }
+  }
 });
 
 // Add Brand
@@ -1971,8 +2257,14 @@ document.getElementById('save-brand-btn').onclick=()=>{
 // Finances
 document.getElementById('add-finance-btn').onclick=()=>{
   activeBrandFinanceId=null;
+  _editFinanceId=null;
+  _editFinanceSource='personal';
   document.getElementById('f-label').value='';
   document.getElementById('f-amount').value='';
+  document.querySelector('#overlay-finance .sheet-title').textContent='Add Entry';
+  document.getElementById('save-finance-btn').textContent='Add';
+  populateAccountSelect();
+  if (document.getElementById('f-account')) document.getElementById('f-account').value='';
   openOverlay('overlay-finance');
 };
 
@@ -1980,8 +2272,31 @@ document.getElementById('save-finance-btn').onclick=()=>{
   const amount=Number(document.getElementById('f-amount').value);
   const label=document.getElementById('f-label').value.trim();
   const type=document.getElementById('f-type').value;
+  const accountId=document.getElementById('f-account')?.value||'';
   if(!amount) return;
-  const entry={id:uid(),type,label,amount,date:new Date().toISOString()};
+
+  if (_editFinanceId) {
+    // Edit mode
+    let updated=false;
+    if (_editFinanceSource==='personal') {
+      const e=S.finances.find(e=>e.id===_editFinanceId);
+      if(e){e.type=type;e.label=label;e.amount=amount;e.accountId=accountId;updated=true;}
+    } else {
+      for(const b of (S.brands||[])){
+        const e=(b.finances||[]).find(e=>e.id===_editFinanceId);
+        if(e){e.type=type;e.label=label;e.amount=amount;e.accountId=accountId;updated=true;break;}
+      }
+    }
+    const wasBrand = _editFinanceSource==='brand';
+    _editFinanceId=null;
+    _editFinanceSource='personal';
+    document.querySelector('#overlay-finance .sheet-title').textContent='Add Entry';
+    document.getElementById('save-finance-btn').textContent='Add';
+    save(); closeOverlay('overlay-finance'); renderFinances(); if(wasBrand)renderBrands();
+    return;
+  }
+
+  const entry={id:uid(),type,label,amount,date:new Date().toISOString(),accountId};
   if(activeBrandFinanceId){
     const brand=S.brands.find(b=>b.id===activeBrandFinanceId);
     if(brand){if(!brand.finances)brand.finances=[];brand.finances.push(entry);}
@@ -1997,6 +2312,78 @@ document.getElementById('finance-list').addEventListener('click',e=>{
   const del=e.target.closest('[data-fin-del]');
   if(del){ S.finances=S.finances.filter(f=>f.id!==del.dataset.finDel); save(); renderFinances(); }
 });
+
+// Goal Groups
+document.getElementById('goal-groups-row').addEventListener('click', e=>{
+  const chip=e.target.closest('[data-ggroup]');
+  if(!chip) return;
+  _activeGoalGroup=chip.dataset.ggroup;
+  renderGoals();
+});
+
+document.getElementById('save-goal-group-btn').onclick=()=>{
+  const name=document.getElementById('gg-name').value.trim();
+  if(!name) return;
+  const resetType=document.getElementById('gg-reset').value;
+  const color=document.getElementById('gg-color').value;
+  if(!S.goalGroups) S.goalGroups=[];
+  S.goalGroups.push({id:uid(),name,resetType,color});
+  save(); closeOverlay('overlay-goal-group'); renderGoals();
+};
+
+// Financial period chips
+document.getElementById('fin-period-row').addEventListener('click', e=>{
+  const chip=e.target.closest('[data-period]');
+  if(!chip) return;
+  _finPeriod=chip.dataset.period;
+  document.querySelectorAll('.fin-period-chip').forEach(c=>c.classList.toggle('active',c.dataset.period===_finPeriod));
+  const pickWrap=document.getElementById('fin-pick-wrap');
+  if(_finPeriod==='pick'){
+    pickWrap.style.display='block';
+    // populate year dropdown
+    const yearSel=document.getElementById('fin-pick-year');
+    const curYr=new Date().getFullYear();
+    yearSel.innerHTML='';
+    for(let y=curYr;y>=curYr-5;y--){
+      const opt=document.createElement('option');
+      opt.value=y; opt.textContent=y;
+      if(y===curYr) opt.selected=true;
+      yearSel.appendChild(opt);
+    }
+    if(_finCustomMonth===null) _finCustomMonth=new Date().getMonth();
+    if(_finCustomYear===null) _finCustomYear=curYr;
+    document.getElementById('fin-pick-month').value=_finCustomMonth;
+    document.getElementById('fin-pick-year').value=_finCustomYear;
+  } else {
+    pickWrap.style.display='none';
+  }
+  renderFinances();
+});
+
+document.getElementById('fin-pick-month').addEventListener('change', e=>{
+  _finCustomMonth=Number(e.target.value);
+  renderFinances();
+});
+
+document.getElementById('fin-pick-year').addEventListener('change', e=>{
+  _finCustomYear=Number(e.target.value);
+  renderFinances();
+});
+
+// Account button
+document.getElementById('open-account-btn').addEventListener('click', ()=>{
+  document.getElementById('acc-name').value='';
+  openOverlay('overlay-account');
+});
+
+document.getElementById('save-account-btn').onclick=()=>{
+  const name=document.getElementById('acc-name').value.trim();
+  if(!name) return;
+  const color=document.getElementById('acc-color').value;
+  if(!S.accounts) S.accounts=[];
+  S.accounts.push({id:uid(),name,color});
+  save(); closeOverlay('overlay-account'); renderAccountFilter(); renderFinances(); populateAccountSelect();
+};
 
 // Schedule
 document.getElementById('save-sched-btn').onclick=()=>{
