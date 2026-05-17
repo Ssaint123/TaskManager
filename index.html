@@ -63,7 +63,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 .view.active{display:block;}
 #bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:90;background:var(--s1);border-top:0.5px solid var(--border);display:flex;flex-direction:column;}
 #nav-tab-row{display:flex;height:var(--nav-h);}
-#nav-safe-area{height:constant(safe-area-inset-bottom);height:env(safe-area-inset-bottom);min-height:0;}
+#nav-safe-area{height:constant(safe-area-inset-bottom);height:env(safe-area-inset-bottom);}
 .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:var(--t3);font-size:10px;font-weight:600;letter-spacing:0.4px;cursor:pointer;transition:color .2s;}
 .nav-tab.active{color:var(--green);}
 .nav-tab svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s;}
@@ -2203,6 +2203,32 @@ if (!S.name) {
   scheduleNotifications();
   scheduleBlockNotifs();
   setupPushSubscription();
+  fixNavSafeArea();
+}
+
+// ─── iOS safe-area bottom fix ─────────────────────────────
+// env(safe-area-inset-bottom) silently returns 0 on some iOS PWA builds.
+// We detect this and apply the correct pixel value manually.
+function fixNavSafeArea() {
+  const spacer = document.getElementById('nav-safe-area');
+  if (!spacer) return;
+
+  // Give CSS one frame to apply env()
+  requestAnimationFrame(() => {
+    if (spacer.offsetHeight > 0) return; // env() worked — nothing to do
+
+    // env() returned 0. Detect modern iPhone (Face ID / home indicator)
+    // by screen aspect ratio — tall iPhones (X and later) are > 2.0
+    const ratio = screen.height / screen.width;
+    if (ratio >= 2.0) {
+      // iPhone X/11/12/13/14/15 series → 34px home indicator
+      spacer.style.height = '34px';
+    } else if (ratio >= 1.9) {
+      // Some iPad / older tall device
+      spacer.style.height = '20px';
+    }
+    // else: iPhone SE / home-button device → 0px is correct
+  });
 }
 </script>
 </body>
