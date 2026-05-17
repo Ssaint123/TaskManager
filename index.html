@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Dashboard">
@@ -35,7 +35,7 @@
   --radius:14px;
 }
 html,body{height:100%;overflow:hidden;background:var(--bg);}
-body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;color:var(--t1);-webkit-user-select:none;user-select:none;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;color:var(--t1);-webkit-user-select:none;user-select:none;touch-action:manipulation;}
 
 /* ── LAYOUT ─────────────────────────────────────────────── */
 #app{height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
@@ -61,7 +61,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 #views{flex:1;overflow:hidden;position:relative;}
 .view{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px);display:none;}
 .view.active{display:block;}
-#bottom-nav{height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:var(--s1);border-top:0.5px solid var(--border);display:flex;align-items:stretch;flex-shrink:0;}
+#bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:90;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:var(--s1);border-top:0.5px solid var(--border);display:flex;align-items:stretch;}
 .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;color:var(--t3);font-size:10px;font-weight:600;letter-spacing:0.4px;cursor:pointer;transition:color .2s;}
 .nav-tab.active{color:var(--green);}
 .nav-tab svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s;}
@@ -140,7 +140,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 .goal-text{font-size:15px;line-height:1.4;flex:1;word-break:break-word;}
 .goal-del{background:none;border:none;color:var(--t3);cursor:pointer;padding:2px 4px;font-size:18px;flex-shrink:0;line-height:1;}
 .goal-add-row{display:flex;gap:8px;margin-top:8px;}
-.goal-input{flex:1;background:var(--s2);border:0.5px solid var(--border);border-radius:10px;padding:13px 14px;font-size:15px;font-family:inherit;color:var(--t1);outline:none;}
+.goal-input{flex:1;background:var(--s2);border:0.5px solid var(--border);border-radius:10px;padding:13px 14px;font-size:16px;font-family:inherit;color:var(--t1);outline:none;}
 .goal-input::placeholder{color:var(--t3);}
 .goal-add-btn{background:var(--green);border:none;border-radius:10px;padding:0 16px;font-size:22px;color:#000;cursor:pointer;font-weight:300;}
 
@@ -210,9 +210,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 .sheet-save{background:none;border:none;color:var(--green);font-size:16px;font-weight:700;cursor:pointer;}
 .sheet-body{padding:16px 20px;display:flex;flex-direction:column;gap:14px;max-height:70vh;overflow-y:auto;}
 .field-label{font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--t2);margin-bottom:6px;}
-.field-input{width:100%;background:var(--s2);border:0.5px solid var(--border);border-radius:10px;padding:13px 14px;font-size:15px;font-family:inherit;color:var(--t1);outline:none;}
+.field-input{width:100%;background:var(--s2);border:0.5px solid var(--border);border-radius:10px;padding:13px 14px;font-size:16px;font-family:inherit;color:var(--t1);outline:none;}
 .field-input::placeholder{color:var(--t3);}
-.field-select{width:100%;background:var(--s2);border:0.5px solid var(--border);border-radius:10px;padding:13px 14px;font-size:15px;font-family:inherit;color:var(--t1);outline:none;-webkit-appearance:none;}
+.field-select{width:100%;background:var(--s2);border:0.5px solid var(--border);border-radius:10px;padding:13px 14px;font-size:16px;font-family:inherit;color:var(--t1);outline:none;-webkit-appearance:none;}
 .row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .field-group{display:flex;flex-direction:column;}
 .legend{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--t2);margin-top:10px;}
@@ -221,6 +221,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 /* ── TAB TOGGLE BUTTONS ──────────────────────────────────── */
 .tab-toggle-btn{padding:11px 10px;border-radius:10px;border:0.5px solid var(--border);background:var(--s2);color:var(--t2);font-size:13px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s;}
 .tab-toggle-btn.on{background:var(--green-d);border-color:var(--green);color:var(--green);}
+
+/* ── GOAL TIMER ──────────────────────────────────────────── */
+.goal-timer-btn{background:none;border:none;color:var(--t3);cursor:pointer;font-size:17px;padding:2px 5px;flex-shrink:0;line-height:1;transition:color .15s;}
+.goal-timer-btn:active{color:var(--blue);}
+.goal-timer-active{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.goal-timer-display{font-size:13px;font-weight:800;color:var(--blue);font-variant-numeric:tabular-nums;min-width:38px;letter-spacing:-0.3px;}
+.goal-timer-stop{background:var(--red-d);border:none;border-radius:6px;color:var(--red);cursor:pointer;font-size:11px;font-weight:700;padding:4px 7px;line-height:1;}
+.timer-preset-btn{padding:14px 10px;background:var(--s2);border:0.5px solid var(--border);border-radius:10px;color:var(--t1);font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;}
+.timer-preset-btn:active{background:var(--blue-d);border-color:var(--blue);color:var(--blue);}
 
 /* ── ADD BRAND PLATFORM LIST ─────────────────────────────── */
 .plat-list{display:flex;flex-direction:column;gap:8px;}
@@ -263,28 +272,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 
     <!-- MAIN -->
     <div class="view active" id="view-main">
-      <div class="ring-wrap" id="main-ring-wrap">
-        <svg class="ring-svg" viewBox="0 0 200 200">
-          <circle class="ring-track" cx="100" cy="100" r="80"/>
-          <circle class="ring-progress" id="main-ring" cx="100" cy="100" r="80" stroke-dasharray="502.65" stroke-dashoffset="502.65"/>
-        </svg>
-        <div class="ring-inner">
-          <div class="ring-score" id="main-score">—</div>
-          <div class="ring-label">Recovery</div>
-        </div>
-        <div class="ring-status" id="main-ring-status"></div>
-      </div>
-
-      <div class="card" id="main-schedule-card">
-        <div class="sec">Schedule <span class="sec-action" id="add-sched-btn">+ Add</span></div>
-        <div id="schedule-list"></div>
-        <div id="schedule-empty" style="color:var(--t3);font-size:13px;text-align:center;padding:10px 0;">No blocks yet — tap + Add</div>
-      </div>
-
-<div class="card" id="main-goals-preview">
-        <div class="sec">Goalmaxxing <span class="sec-action" id="main-goto-goals">View all</span></div>
-        <div id="main-goals-list"></div>
-      </div>
+      <div id="main-content"></div>
     </div>
 
     <!-- HEALTH -->
@@ -500,6 +488,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
           <option value="var(--gold)">Gold</option>
           <option value="var(--red)">Red</option>
         </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Goal Focus Timer Picker -->
+<div class="overlay" id="overlay-timer">
+  <div class="overlay-bg"></div>
+  <div class="sheet">
+    <div class="sheet-header">
+      <button class="sheet-cancel" data-close="overlay-timer">Cancel</button>
+      <div class="sheet-title">⏱ Focus Timer</div>
+    </div>
+    <div class="sheet-body">
+      <div class="field-label" style="margin-bottom:12px;">How long do you want to focus?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <button class="timer-preset-btn" onclick="startGoalTimer(5)">5 min</button>
+        <button class="timer-preset-btn" onclick="startGoalTimer(10)">10 min</button>
+        <button class="timer-preset-btn" onclick="startGoalTimer(15)">15 min</button>
+        <button class="timer-preset-btn" onclick="startGoalTimer(25)">25 min<br><span style="font-size:10px;color:var(--t2);font-weight:400;">Pomodoro</span></button>
+        <button class="timer-preset-btn" onclick="startGoalTimer(30)">30 min</button>
+        <button class="timer-preset-btn" onclick="startGoalTimer(45)">45 min</button>
+        <button class="timer-preset-btn" onclick="startGoalTimer(60)">1 hr</button>
+        <button class="timer-preset-btn" onclick="startGoalTimer(90)">1.5 hr</button>
+        <button class="timer-preset-btn" onclick="startGoalTimer(120)">2 hr</button>
+      </div>
+      <div style="height:0.5px;background:var(--border);margin:16px 0;"></div>
+      <div class="field-group">
+        <div class="field-label">Custom duration</div>
+        <div style="display:flex;gap:8px;">
+          <input class="field-input" id="timer-custom-min" type="number" min="1" max="480" placeholder="Minutes..." style="flex:1;">
+          <button id="timer-custom-start" style="background:var(--blue);border:none;border-radius:10px;padding:0 20px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;">Start</button>
+        </div>
       </div>
     </div>
   </div>
@@ -752,7 +773,6 @@ function renderHealth() {
   const h = S.health;
   const r = h.recovery||0;
   updateRing(document.getElementById('health-ring'), document.getElementById('health-score'), document.getElementById('health-ring-status'), r);
-  updateRing(document.getElementById('main-ring'), document.getElementById('main-score'), document.getElementById('main-ring-status'), r);
 
   // Sleep bar
   const total = (h.rem||0)+(h.deep||0)+(h.light||0)+(h.awake||0);
@@ -828,26 +848,22 @@ function renderGoals() {
   document.getElementById('streak-badge').textContent = `⚡ ${S.goalStreak||0} day streak`;
 
   const list = document.getElementById('goal-list');
-  list.innerHTML = todayGoals.map(g=>`
-    <div class="goal-item ${g.done?'done':''}" data-id="${g.id}">
+  list.innerHTML = todayGoals.map(g=>{
+    const timer = activeGoalTimers[g.id];
+    const timerHtml = timer
+      ? `<div class="goal-timer-active">
+           <span class="goal-timer-display" id="gtimer-${g.id}">${fmtTimerRemaining(timer)}</span>
+           <button class="goal-timer-stop" onclick="stopGoalTimer('${g.id}')">■</button>
+         </div>`
+      : `<button class="goal-timer-btn" onclick="openGoalTimer('${g.id}')" title="Focus timer">⏱</button>`;
+    return `<div class="goal-item ${g.done?'done':''}" data-id="${g.id}">
       <button class="goal-check ${g.done?'done':''}" data-id="${g.id}"></button>
       <div class="goal-text">${escHtml(g.text)}</div>
+      ${timerHtml}
       <button class="goal-del" data-del="${g.id}">×</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
-  renderMainGoalsPreview(todayGoals, done, total);
-}
-
-function renderMainGoalsPreview(todayGoals, done, total) {
-  const el = document.getElementById('main-goals-list');
-  if (!el) return;
-  if (!todayGoals.length) { el.innerHTML='<div style="color:var(--t3);font-size:13px;padding:8px 0;">No goals yet today</div>'; return; }
-  const preview = todayGoals.slice(0,4);
-  el.innerHTML = `<div style="font-size:13px;color:var(--t2);margin-bottom:8px;">${done} / ${total} complete</div>`
-    + preview.map(g=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border);">
-        <span style="font-size:14px;${g.done?'color:var(--t3);text-decoration:line-through;':''}">${escHtml(g.text)}</span>
-      </div>`).join('')
-    + (todayGoals.length>4?`<div style="color:var(--t2);font-size:12px;padding-top:8px;">+${todayGoals.length-4} more</div>`:'');
 }
 
 // ─── RENDER BRANDS ────────────────────────────────────────
@@ -987,10 +1003,243 @@ function renderSchedule() {
         <div class="sched-label">${escHtml(s.label)}</div>
         <div class="sched-time">${fmtTime(s.start)} – ${fmtTime(s.end)}</div>
       </div>
-      <button class="sched-del" data-sched-del="${s.id}">×</button>
+      <button class="sched-del" onclick="deleteScheduleItem('${s.id}')">×</button>
     </div>`).join('');
 }
 
+
+function deleteScheduleItem(id) {
+  S.schedule = S.schedule.filter(s => s.id !== id);
+  save(); renderSchedule(); scheduleBlockNotifs();
+}
+
+// ─── GOAL FOCUS TIMER ─────────────────────────────────────
+const activeGoalTimers = {}; // { goalId: { endTime, intervalId, minutes } }
+let _timerTargetGoalId = null;
+
+function fmtTimerRemaining(timer) {
+  const ms = Math.max(0, timer.endTime - Date.now());
+  const totalSec = Math.ceil(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+function openGoalTimer(goalId) {
+  _timerTargetGoalId = goalId;
+  document.getElementById('timer-custom-min').value = '';
+  openOverlay('overlay-timer');
+}
+
+function startGoalTimer(minutes) {
+  if (!_timerTargetGoalId) return;
+  const goalId = _timerTargetGoalId;
+  if (activeGoalTimers[goalId]) stopGoalTimer(goalId);
+  const endTime = Date.now() + minutes * 60 * 1000;
+  const intervalId = setInterval(() => tickGoalTimer(goalId), 1000);
+  activeGoalTimers[goalId] = { endTime, intervalId, minutes };
+  closeOverlay('overlay-timer');
+  _timerTargetGoalId = null;
+  renderGoals();
+}
+
+function stopGoalTimer(goalId) {
+  const timer = activeGoalTimers[goalId];
+  if (!timer) return;
+  clearInterval(timer.intervalId);
+  delete activeGoalTimers[goalId];
+  renderGoals();
+}
+
+function tickGoalTimer(goalId) {
+  const timer = activeGoalTimers[goalId];
+  if (!timer) return;
+  const remaining = timer.endTime - Date.now();
+  if (remaining <= 0) {
+    clearInterval(timer.intervalId);
+    delete activeGoalTimers[goalId];
+    const goal = S.goals.find(g => g.id === goalId);
+    if (Notification.permission === 'granted') {
+      new Notification('⏱ Focus session done!', {
+        body: goal ? `Time's up for: "${goal.text}"` : 'Your focus session ended.',
+        tag: 'goal-timer-' + goalId,
+        requireInteraction: false,
+      });
+    }
+    renderGoals();
+    return;
+  }
+  const el = document.getElementById('gtimer-' + goalId);
+  if (el) el.textContent = fmtTimerRemaining(timer);
+}
+
+// ─── SCHEDULE BLOCK NOTIFICATIONS ─────────────────────────
+let _blockTimers = [];
+
+function clearBlockTimers() {
+  _blockTimers.forEach(t => clearTimeout(t));
+  _blockTimers = [];
+}
+
+function scheduleBlockNotifs() {
+  clearBlockTimers();
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const now = new Date();
+  S.schedule.forEach(block => {
+    if (!block.start) return;
+    // Start notification
+    const [sh, sm] = block.start.split(':').map(Number);
+    const startAt = new Date(); startAt.setHours(sh, sm, 0, 0);
+    const startDelay = startAt - now;
+    if (startDelay > 0) {
+      _blockTimers.push(setTimeout(() => {
+        new Notification('⏰ ' + block.label + ' is starting', {
+          body: block.end ? `Runs until ${fmtTime(block.end)}` : 'Your block is starting now.',
+          tag: 'block-start-' + block.id,
+          requireInteraction: false,
+        });
+      }, startDelay));
+    }
+    // End notification
+    if (!block.end) return;
+    const [eh, em] = block.end.split(':').map(Number);
+    const endAt = new Date(); endAt.setHours(eh, em, 0, 0);
+    const endDelay = endAt - now;
+    if (endDelay > 0) {
+      _blockTimers.push(setTimeout(() => {
+        new Notification('✅ ' + block.label + ' just ended', {
+          body: 'Time block complete.',
+          tag: 'block-end-' + block.id,
+          requireInteraction: false,
+        });
+      }, endDelay));
+    }
+  });
+}
+
+// ─── RENDER MAIN (progress hub) ───────────────────────────
+function renderMain() {
+  const el = document.getElementById('main-content');
+  if (!el) return;
+  const hidden = S.hiddenTabs || [];
+  const t = today();
+  let html = '';
+
+  // ── SCHEDULE ──────────────────────────────────────────────
+  html += `<div class="card">
+    <div class="sec">Today's Schedule <span class="sec-action" onclick="openAddSched()">+ Add</span></div>
+    <div id="schedule-list"></div>
+    <div id="schedule-empty" style="color:var(--t3);font-size:13px;text-align:center;padding:10px 0;display:none;">No blocks yet — tap + Add</div>
+  </div>`;
+
+  // ── GOALS ─────────────────────────────────────────────────
+  if (!hidden.includes('goals')) {
+    const todayGoals = S.goals.filter(g => g.date === t);
+    const done = todayGoals.filter(g => g.done).length;
+    const total = todayGoals.length;
+    const pct = total ? Math.round(done / total * 100) : 0;
+    const pending = todayGoals.filter(g => !g.done).slice(0, 3);
+    html += `<div class="card" style="cursor:pointer;" onclick="switchView('goals')">
+      <div class="sec">⚡ Goalmaxxing
+        <span class="chip chip-${done===total&&total>0?'green':'orange'}" style="font-size:9px;">${pct}%</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;">
+        <span style="font-size:40px;font-weight:900;letter-spacing:-2px;line-height:1;color:${done===total&&total>0?'var(--green)':'var(--t1)'};">${done}</span>
+        <span style="font-size:15px;color:var(--t2);">/ ${total} done</span>
+        ${S.goalStreak ? `<span class="streak-badge" style="margin-left:auto;font-size:10px;padding:4px 9px;">⚡ ${S.goalStreak}d streak</span>` : ''}
+      </div>
+      <div style="height:4px;border-radius:2px;background:var(--s3);margin-bottom:${pending.length ? '10px' : '0'};">
+        <div style="height:100%;width:${pct}%;border-radius:2px;background:var(--green);transition:width .4s;"></div>
+      </div>
+      ${pending.map(g => `<div style="padding:7px 0;border-top:0.5px solid var(--border);font-size:14px;color:var(--t2);">${escHtml(g.text)}</div>`).join('')}
+      ${!total ? '<div style="color:var(--t3);font-size:13px;padding:4px 0;">No goals set for today — tap to add</div>' : ''}
+    </div>`;
+  }
+
+  // ── HEALTH ────────────────────────────────────────────────
+  if (!hidden.includes('health')) {
+    const h = S.health;
+    const r = h.recovery || 0;
+    const color = recoveryColor(r);
+    const R = 29, CIRC_SM = (2 * Math.PI * R).toFixed(2);
+    const offset = (2 * Math.PI * R * (1 - Math.min(100, Math.max(0, r)) / 100)).toFixed(2);
+    html += `<div class="card" style="cursor:pointer;" onclick="switchView('health')">
+      <div class="sec">❤️ Health</div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="position:relative;width:72px;height:72px;flex-shrink:0;">
+          <svg viewBox="0 0 72 72" width="72" height="72">
+            <circle fill="none" stroke="var(--s3)" stroke-width="7" cx="36" cy="36" r="${R}"/>
+            <circle fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"
+              cx="36" cy="36" r="${R}"
+              stroke-dasharray="${CIRC_SM}"
+              stroke-dashoffset="${offset}"
+              transform="rotate(-90 36 36)"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-size:20px;font-weight:800;line-height:1;color:${color};">${r || '—'}</div>
+            <div style="font-size:8px;color:var(--t2);letter-spacing:0.5px;text-transform:uppercase;">Rec</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;">
+          <div><div style="font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px;">HRV</div><div style="font-size:20px;font-weight:700;letter-spacing:-0.5px;">${h.hrv || '—'}<span style="font-size:11px;color:var(--t2);font-weight:400;"> ms</span></div></div>
+          <div><div style="font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px;">RHR</div><div style="font-size:20px;font-weight:700;letter-spacing:-0.5px;">${h.rhr || '—'}<span style="font-size:11px;color:var(--t2);font-weight:400;"> bpm</span></div></div>
+          <div><div style="font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px;">Sleep</div><div style="font-size:20px;font-weight:700;letter-spacing:-0.5px;">${h.sleepHrs || '—'}<span style="font-size:11px;color:var(--t2);font-weight:400;">h</span></div></div>
+          <div><div style="font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px;">Strain</div><div style="font-size:20px;font-weight:700;letter-spacing:-0.5px;">${h.strain || '—'}</div></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── BRAND ─────────────────────────────────────────────────
+  if (!hidden.includes('brand')) {
+    const totalFollowers = S.brands.reduce((sum, b) =>
+      sum + (b.platforms || []).reduce((s, p) => s + (Number(p.followers) || 0), 0), 0);
+    html += `<div class="card" style="cursor:pointer;" onclick="switchView('brand')">
+      <div class="sec">⭐ Brand</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:${S.brands.length ? '10px' : '4px'};">
+        <span style="font-size:36px;font-weight:900;letter-spacing:-1.5px;">${fmtFollowers(totalFollowers)}</span>
+        <span style="font-size:14px;color:var(--t2);">total followers</span>
+      </div>
+      ${S.brands.map(b => {
+        const bf = (b.platforms || []).reduce((s, p) => s + (Number(p.followers) || 0), 0);
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-top:0.5px solid var(--border);">
+          <span style="font-size:14px;">${escHtml(b.name)}</span>
+          <span style="font-size:14px;font-weight:700;color:var(--t2);">${fmtFollowers(bf)}</span>
+        </div>`;
+      }).join('')}
+      ${!S.brands.length ? '<div style="color:var(--t3);font-size:13px;">No brands yet — tap to add one</div>' : ''}
+    </div>`;
+  }
+
+  // ── FINANCES ──────────────────────────────────────────────
+  if (!hidden.includes('finances')) {
+    const m = new Date().getMonth();
+    const entries = S.finances.filter(e => { const d = new Date(e.date); return d.getMonth() === m; });
+    const income  = entries.filter(e => e.type === 'income').reduce((a, e) => a + Number(e.amount), 0);
+    const expense = entries.filter(e => e.type === 'expense').reduce((a, e) => a + Number(e.amount), 0);
+    const profit  = income - expense;
+    html += `<div class="card" style="cursor:pointer;" onclick="switchView('finances')">
+      <div class="sec">💰 Finances</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:12px;">
+        <span style="font-size:36px;font-weight:900;letter-spacing:-1.5px;color:${profit >= 0 ? 'var(--green)' : 'var(--red)'};">${profit >= 0 ? '+$' : '-$'}${Math.abs(profit).toFixed(0)}</span>
+        <span style="font-size:14px;color:var(--t2);">this month</span>
+      </div>
+      <div style="display:flex;gap:16px;">
+        <div><div style="font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;">Income</div><div style="font-size:16px;font-weight:700;color:var(--green);">+$${income.toFixed(0)}</div></div>
+        <div style="width:0.5px;background:var(--border);"></div>
+        <div><div style="font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;">Expenses</div><div style="font-size:16px;font-weight:700;color:var(--red);">-$${expense.toFixed(0)}</div></div>
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+  renderSchedule();
+}
+
+function openAddSched() {
+  document.getElementById('sc-label').value = '';
+  openOverlay('overlay-sched');
+}
 
 // ─── RENDER HEADER ────────────────────────────────────────
 function renderHeader() {
@@ -1039,7 +1288,7 @@ function switchView(v) {
   if (v==='goals') renderGoals();
   if (v==='brand') renderBrands();
   if (v==='finances') renderFinances();
-  if (v==='main') { renderHeader(); renderSchedule(); renderGoals(); }
+  if (v==='main') { renderHeader(); renderMain(); }
 }
 
 // ─── SETUP ────────────────────────────────────────────────
@@ -1053,8 +1302,7 @@ function completeSetup(name) {
   renderHeader();
   renderHealth();
   renderGoals();
-  renderSchedule();
-  renderOverseer();
+  renderMain();
 }
 
 // ─── ESCAPE HTML ──────────────────────────────────────────
@@ -1205,17 +1453,19 @@ document.getElementById('finance-list').addEventListener('click',e=>{
 });
 
 // Schedule
-document.getElementById('add-sched-btn').onclick=()=>{ document.getElementById('sc-label').value=''; openOverlay('overlay-sched'); };
 document.getElementById('save-sched-btn').onclick=()=>{
   const label=document.getElementById('sc-label').value.trim();
   if(!label) return;
   S.schedule.push({id:uid(),label,start:document.getElementById('sc-start').value,end:document.getElementById('sc-end').value,color:document.getElementById('sc-color').value});
-  save(); closeOverlay('overlay-sched'); renderSchedule();
+  save(); closeOverlay('overlay-sched'); renderSchedule(); scheduleBlockNotifs();
 };
-document.getElementById('schedule-list').addEventListener('click',e=>{
-  const del=e.target.closest('[data-sched-del]');
-  if(del){ S.schedule=S.schedule.filter(s=>s.id!==del.dataset.schedDel); save(); renderSchedule(); }
-});
+
+// Goal timer — custom duration
+document.getElementById('timer-custom-start').onclick = () => {
+  const min = parseInt(document.getElementById('timer-custom-min').value);
+  if (!min || min < 1) return;
+  startGoalTimer(min);
+};
 
 
 // Brand reflections (event delegation)
@@ -1434,9 +1684,6 @@ document.getElementById('daytype-list').addEventListener('click',e=>{
   if(btn){ S.dayType=btn.dataset.dt; save(); renderHeader(); closeOverlay('overlay-daytype'); }
 });
 
-// Main → Goals shortcut
-document.getElementById('main-goto-goals').onclick=()=>switchView('goals');
-
 // ─── INIT ─────────────────────────────────────────────────
 load();
 
@@ -1454,9 +1701,10 @@ if (!S.name) {
   document.getElementById('header').style.display='';
   document.getElementById('views').style.display='';
   document.getElementById('bottom-nav').style.display='';
-  renderHeader(); renderHealth(); renderGoals(); renderSchedule();
+  renderHeader(); renderHealth(); renderGoals(); renderMain();
   applyTabVisibility();
   scheduleNotifications();
+  scheduleBlockNotifs();
 }
 </script>
 </body>
