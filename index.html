@@ -437,6 +437,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
           <div class="finance-sum-val" id="fin-net">$0</div>
         </div>
       </div>
+      <!-- Withholding summary row — shown only when entries have withholding -->
+      <div id="fin-withhold-row" style="display:none;background:var(--s2);border-radius:14px;padding:14px;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">W-2 Withholding</div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px;">
+          <span style="color:var(--t2);">Withheld so far</span>
+          <span id="fin-withheld-amt" style="color:var(--green);font-weight:600;">$0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px;">
+          <span style="color:var(--t2);">Est. tax owed</span>
+          <span id="fin-withheld-owed" style="color:var(--orange);font-weight:600;">$0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;border-top:0.5px solid var(--border);padding-top:8px;margin-top:4px;">
+          <span id="fin-withheld-diff-lbl">Refund Est.</span>
+          <span id="fin-withheld-diff">$0</span>
+        </div>
+      </div>
       <div class="fin-period-row" id="fin-period-row">
         <button class="fin-period-chip active" data-period="month">This Month</button>
         <button class="fin-period-chip" data-period="ytd">YTD</button>
@@ -593,6 +609,43 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
       </div>
       <div class="field-group"><div class="field-label">Label</div><input class="field-input" id="f-label" type="text" placeholder="e.g. TikTok Creator Fund"></div>
       <div class="field-group"><div class="field-label">Amount ($)</div><input class="field-input" id="f-amount" type="number" step="0.01" placeholder="0.00"></div>
+
+      <!-- W-2 Withholding — only shown for income entries -->
+      <div id="f-withhold-section" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 10px;">
+          <div class="field-label" style="margin:0;">Tax Withheld (W-2)</div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="f-withhold-toggle">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div id="f-withhold-body" style="display:none;">
+          <div class="tax-mode-toggle" id="f-withhold-mode-toggle" style="margin-bottom:12px;">
+            <button class="tax-mode-btn active" data-wmode="auto">Auto</button>
+            <button class="tax-mode-btn" data-wmode="manual">Manual</button>
+          </div>
+          <!-- Auto -->
+          <div id="f-withhold-auto">
+            <div class="field-group"><div class="field-label">Pay Period</div>
+              <select class="field-select" id="f-pay-period">
+                <option value="52">Weekly (52×/yr)</option>
+                <option value="26" selected>Biweekly (26×/yr)</option>
+                <option value="24">Semi-monthly (24×/yr)</option>
+                <option value="12">Monthly (12×/yr)</option>
+              </select>
+            </div>
+            <div id="f-withhold-preview" style="background:var(--s2);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--t2);margin-top:4px;display:none;">
+              Est. withheld: <span id="f-withhold-est" style="color:var(--fg);font-weight:600;"></span>
+            </div>
+          </div>
+          <!-- Manual -->
+          <div id="f-withhold-manual" style="display:none;">
+            <div class="field-group"><div class="field-label">Amount Withheld ($)</div>
+              <input class="field-input" id="f-withhold-amt" type="number" step="0.01" placeholder="0.00">
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1341,12 +1394,15 @@ function openAddBrandFinance(brandId) {
   activeBrandFinanceId = brandId;
   _editFinanceId = null;
   _editFinanceSource = 'personal';
+  document.getElementById('f-type').value='income';
+  document.getElementById('f-withhold-section').style.display='block';
   document.getElementById('f-label').value='';
   document.getElementById('f-amount').value='';
   document.querySelector('#overlay-finance .sheet-title').textContent='Add Entry';
   document.getElementById('save-finance-btn').textContent='Add';
   populateAccountSelect();
   if (document.getElementById('f-account')) document.getElementById('f-account').value='';
+  _resetWithholdUI();
   openOverlay('overlay-finance');
 }
 
@@ -1459,6 +1515,56 @@ function getFinPeriodLabel() {
   return 'This Month';
 }
 
+// ─── WITHHOLDING HELPERS ──────────────────────────────────
+function calcAutoWithheld(amount, payPeriods) {
+  // Annualize, run brackets (W-2 = not self-employed), divide back
+  const annual = amount * payPeriods;
+  const res = calcFederalTax(annual, S.filingStatus||'single', false);
+  return res.totalTax / payPeriods;
+}
+
+function _updateWithholdEstimate() {
+  const amt = Number(document.getElementById('f-amount').value)||0;
+  const periods = Number(document.getElementById('f-pay-period').value)||26;
+  const preview = document.getElementById('f-withhold-preview');
+  const estEl = document.getElementById('f-withhold-est');
+  if (amt > 0) {
+    const est = calcAutoWithheld(amt, periods);
+    estEl.textContent = '$'+est.toFixed(2)+' / paycheck';
+    preview.style.display = 'block';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+function _resetWithholdUI() {
+  document.getElementById('f-withhold-toggle').checked = false;
+  document.getElementById('f-withhold-body').style.display = 'none';
+  document.getElementById('f-withhold-preview').style.display = 'none';
+  document.getElementById('f-withhold-amt').value = '';
+  // Reset to Auto mode
+  document.querySelectorAll('#f-withhold-mode-toggle .tax-mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.wmode === 'auto');
+  });
+  document.getElementById('f-withhold-auto').style.display = 'block';
+  document.getElementById('f-withhold-manual').style.display = 'none';
+}
+
+function getWithholdFromUI() {
+  if (!document.getElementById('f-withhold-toggle').checked) return { withheldMode:'none', withheld:0, payPeriod:null };
+  const modeBtn = document.querySelector('#f-withhold-mode-toggle .tax-mode-btn.active');
+  const wmode = modeBtn ? modeBtn.dataset.wmode : 'auto';
+  const periods = Number(document.getElementById('f-pay-period').value)||26;
+  let withheld = 0;
+  if (wmode === 'auto') {
+    const amt = Number(document.getElementById('f-amount').value)||0;
+    withheld = calcAutoWithheld(amt, periods);
+  } else {
+    withheld = Number(document.getElementById('f-withhold-amt').value)||0;
+  }
+  return { withheldMode: wmode, withheld, payPeriod: wmode==='auto' ? periods : null };
+}
+
 function renderFinances() {
   const periodLabelEl = document.getElementById('fin-period-label');
   if (periodLabelEl) periodLabelEl.textContent = getFinPeriodLabel();
@@ -1500,6 +1606,25 @@ function renderFinances() {
   const netEl = document.getElementById('fin-net');
   netEl.textContent = (afterTax>=0?'$':'-$')+Math.abs(afterTax).toFixed(2);
   netEl.style.color = afterTax>=0?'var(--green)':'var(--red)';
+
+  // Withholding summary
+  const totalWithheld = allEntries
+    .filter(e=>e.type==='income' && e.withheldMode && e.withheldMode !== 'none' && Number(e.withheld) > 0)
+    .reduce((a,e)=>a+Number(e.withheld),0);
+  const withholdRow = document.getElementById('fin-withhold-row');
+  if (totalWithheld > 0) {
+    const diff = totalWithheld - taxOwed;
+    const isRefund = diff >= 0;
+    document.getElementById('fin-withheld-amt').textContent = '$'+totalWithheld.toFixed(2);
+    document.getElementById('fin-withheld-owed').textContent = '$'+taxOwed.toFixed(2);
+    document.getElementById('fin-withheld-diff-lbl').textContent = isRefund ? '🟢 Refund Est.' : '🔴 You May Owe';
+    const diffEl = document.getElementById('fin-withheld-diff');
+    diffEl.textContent = '$'+Math.abs(diff).toFixed(2);
+    diffEl.style.color = isRefund ? 'var(--green)' : 'var(--red)';
+    withholdRow.style.display = 'block';
+  } else {
+    withholdRow.style.display = 'none';
+  }
 
   // Funds breakdown
   const fundsEl = document.getElementById('funds-breakdown');
@@ -1564,10 +1689,35 @@ function openEditFinance(id, source) {
   _editFinanceId = id;
   _editFinanceSource = source;
   populateAccountSelect();
-  document.getElementById('f-type').value = entry.type||'income';
+  const entryType = entry.type||'income';
+  document.getElementById('f-type').value = entryType;
   document.getElementById('f-label').value = entry.label||'';
   document.getElementById('f-amount').value = entry.amount||'';
   if (document.getElementById('f-account')) document.getElementById('f-account').value = entry.accountId||'';
+  // Withholding
+  const withholdSect = document.getElementById('f-withhold-section');
+  if (entryType === 'income') {
+    withholdSect.style.display = 'block';
+    _resetWithholdUI();
+    if (entry.withheldMode && entry.withheldMode !== 'none') {
+      document.getElementById('f-withhold-toggle').checked = true;
+      document.getElementById('f-withhold-body').style.display = 'block';
+      const isAuto = entry.withheldMode === 'auto';
+      document.querySelectorAll('#f-withhold-mode-toggle .tax-mode-btn').forEach(b=>{
+        b.classList.toggle('active', b.dataset.wmode === entry.withheldMode);
+      });
+      document.getElementById('f-withhold-auto').style.display = isAuto ? 'block' : 'none';
+      document.getElementById('f-withhold-manual').style.display = isAuto ? 'none' : 'block';
+      if (isAuto) {
+        if (entry.payPeriod) document.getElementById('f-pay-period').value = entry.payPeriod;
+        _updateWithholdEstimate();
+      } else {
+        document.getElementById('f-withhold-amt').value = entry.withheld||'';
+      }
+    }
+  } else {
+    withholdSect.style.display = 'none';
+  }
   document.querySelector('#overlay-finance .sheet-title').textContent = 'Edit Entry';
   document.getElementById('save-finance-btn').textContent = 'Save';
   openOverlay('overlay-finance');
@@ -2259,16 +2409,50 @@ document.getElementById('save-brand-btn').onclick=()=>{
 };
 
 // Finances
+// Show/hide withholding section based on income/expense type
+document.getElementById('f-type').addEventListener('change', ()=>{
+  const isIncome = document.getElementById('f-type').value === 'income';
+  document.getElementById('f-withhold-section').style.display = isIncome ? 'block' : 'none';
+  if (!isIncome) _resetWithholdUI();
+});
+
+// Withholding toggle
+document.getElementById('f-withhold-toggle').addEventListener('change', ()=>{
+  const on = document.getElementById('f-withhold-toggle').checked;
+  document.getElementById('f-withhold-body').style.display = on ? 'block' : 'none';
+  if (on) _updateWithholdEstimate();
+});
+
+// Withholding mode (Auto / Manual)
+document.getElementById('f-withhold-mode-toggle').addEventListener('click', e=>{
+  const btn = e.target.closest('.tax-mode-btn');
+  if (!btn) return;
+  document.querySelectorAll('#f-withhold-mode-toggle .tax-mode-btn').forEach(b=>b.classList.toggle('active', b===btn));
+  const isAuto = btn.dataset.wmode === 'auto';
+  document.getElementById('f-withhold-auto').style.display = isAuto ? 'block' : 'none';
+  document.getElementById('f-withhold-manual').style.display = isAuto ? 'none' : 'block';
+  if (isAuto) _updateWithholdEstimate();
+});
+
+// Recalculate estimate when amount or pay period changes
+document.getElementById('f-amount').addEventListener('input', ()=>{
+  if (document.getElementById('f-withhold-toggle').checked) _updateWithholdEstimate();
+});
+document.getElementById('f-pay-period').addEventListener('change', _updateWithholdEstimate);
+
 document.getElementById('add-finance-btn').onclick=()=>{
   activeBrandFinanceId=null;
   _editFinanceId=null;
   _editFinanceSource='personal';
+  document.getElementById('f-type').value='income';
+  document.getElementById('f-withhold-section').style.display='block';
   document.getElementById('f-label').value='';
   document.getElementById('f-amount').value='';
   document.querySelector('#overlay-finance .sheet-title').textContent='Add Entry';
   document.getElementById('save-finance-btn').textContent='Add';
   populateAccountSelect();
   if (document.getElementById('f-account')) document.getElementById('f-account').value='';
+  _resetWithholdUI();
   openOverlay('overlay-finance');
 };
 
@@ -2277,6 +2461,7 @@ document.getElementById('save-finance-btn').onclick=()=>{
   const label=document.getElementById('f-label').value.trim();
   const type=document.getElementById('f-type').value;
   const accountId=document.getElementById('f-account')?.value||'';
+  const withholdData = type==='income' ? getWithholdFromUI() : {withheldMode:'none',withheld:0,payPeriod:null};
   if(!amount) return;
 
   if (_editFinanceId) {
@@ -2284,11 +2469,13 @@ document.getElementById('save-finance-btn').onclick=()=>{
     let updated=false;
     if (_editFinanceSource==='personal') {
       const e=S.finances.find(e=>e.id===_editFinanceId);
-      if(e){e.type=type;e.label=label;e.amount=amount;e.accountId=accountId;updated=true;}
+      if(e){e.type=type;e.label=label;e.amount=amount;e.accountId=accountId;
+            e.withheldMode=withholdData.withheldMode;e.withheld=withholdData.withheld;e.payPeriod=withholdData.payPeriod;updated=true;}
     } else {
       for(const b of (S.brands||[])){
         const e=(b.finances||[]).find(e=>e.id===_editFinanceId);
-        if(e){e.type=type;e.label=label;e.amount=amount;e.accountId=accountId;updated=true;break;}
+        if(e){e.type=type;e.label=label;e.amount=amount;e.accountId=accountId;
+              e.withheldMode=withholdData.withheldMode;e.withheld=withholdData.withheld;e.payPeriod=withholdData.payPeriod;updated=true;break;}
       }
     }
     const wasBrand = _editFinanceSource==='brand';
@@ -2300,7 +2487,8 @@ document.getElementById('save-finance-btn').onclick=()=>{
     return;
   }
 
-  const entry={id:uid(),type,label,amount,date:new Date().toISOString(),accountId};
+  const entry={id:uid(),type,label,amount,date:new Date().toISOString(),accountId,
+               withheldMode:withholdData.withheldMode,withheld:withholdData.withheld,payPeriod:withholdData.payPeriod};
   if(activeBrandFinanceId){
     const brand=S.brands.find(b=>b.id===activeBrandFinanceId);
     if(brand){if(!brand.finances)brand.finances=[];brand.finances.push(entry);}
