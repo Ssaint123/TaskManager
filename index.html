@@ -1055,6 +1055,9 @@ function load() {
   if (!S.hiddenTabs) S.hiddenTabs = [];
   if (!S.accounts) S.accounts = [];
   if (!S.goalGroups) S.goalGroups = [];
+  // Migrate: assign IDs to any old finance entries that were saved without one
+  (S.finances||[]).forEach(e => { if (!e.id) e.id = uid(); });
+  (S.brands||[]).forEach(b => { (b.finances||[]).forEach(e => { if (!e.id) e.id = uid(); }); });
 }
 
 function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
@@ -1560,6 +1563,7 @@ function openEditFinance(id, source) {
   if (!entry) return;
   _editFinanceId = id;
   _editFinanceSource = source;
+  populateAccountSelect();
   document.getElementById('f-type').value = entry.type||'income';
   document.getElementById('f-label').value = entry.label||'';
   document.getElementById('f-amount').value = entry.amount||'';
