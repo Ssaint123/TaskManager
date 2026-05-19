@@ -146,6 +146,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
 .goal-input{flex:1;background:var(--s2);border:0.5px solid var(--border);border-radius:10px;padding:13px 14px;font-size:16px;font-family:inherit;color:var(--t1);outline:none;}
 .goal-input::placeholder{color:var(--t3);}
 .goal-add-btn{background:var(--green);border:none;border-radius:10px;padding:0 16px;font-size:22px;color:#000;cursor:pointer;font-weight:300;}
+.goal-recur-btn{background:var(--s2);border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-size:16px;cursor:pointer;transition:all .2s;flex-shrink:0;}
+.goal-recur-btn.active{border-color:var(--blue);background:rgba(100,160,255,.12);}
+.goal-recur-chips{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.recur-chip{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--t2);cursor:pointer;transition:all .15s;}
+.recur-chip.active{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600;}
+.goal-recur-badge{font-size:10px;background:rgba(100,160,255,.15);color:var(--blue);border-radius:6px;padding:1px 5px;margin-left:4px;font-weight:600;flex-shrink:0;}
 
 /* ── BRAND ───────────────────────────────────────────────── */
 .brand-card{background:var(--s1);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;}
@@ -397,7 +403,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;co
         <div class="goal-list" id="goal-list"></div>
         <div class="goal-add-row">
           <input class="goal-input" id="goal-input" type="text" placeholder="Add a goal...">
+          <button class="goal-recur-btn" id="goal-recur-btn" title="Recurring goal">🔄</button>
           <button class="goal-add-btn" id="goal-add-btn">+</button>
+        </div>
+        <div class="goal-recur-chips" id="goal-recur-chips" style="display:none;">
+          <span style="font-size:12px;color:var(--t2);margin-right:4px;">Repeats:</span>
+          <button class="recur-chip active" data-recur="daily">Daily</button>
+          <button class="recur-chip" data-recur="weekly">Weekly</button>
+          <button class="recur-chip" data-recur="monthly">Monthly</button>
         </div>
       </div>
     </div>
@@ -1269,8 +1282,22 @@ function renderGoals() {
   const resetType = getActiveGroupResetType();
   const periodKey = getPeriodKey(resetType);
   const PRIORITY_ORDER = ['high','medium','low',null,undefined];
-  const groupGoals = S.goals.filter(g=>(g.groupId||'daily')===_activeGoalGroup && g.date===periodKey);
-  const sorted = [...groupGoals].sort((a,b)=>PRIORITY_ORDER.indexOf(a.priority)-PRIORITY_ORDER.indexOf(b.priority));
+
+  // Regular (non-recurring) goals for this period
+  const regularGoals = S.goals.filter(g=>
+    !g.recurring && (g.groupId||'daily')===_activeGoalGroup && g.date===periodKey
+  );
+
+  // Recurring goals — always show for this group, compute done from lastDoneKey
+  const recurringGoals = S.goals.filter(g=>
+    g.recurring && (g.groupId||'daily')===_activeGoalGroup
+  ).map(g=>{
+    const rKey = getPeriodKey(g.recurPeriod||'daily');
+    return Object.assign({}, g, { done: g.lastDoneKey === rKey, _rKey: rKey });
+  });
+
+  const allGoals = [...regularGoals, ...recurringGoals];
+  const sorted = [...allGoals].sort((a,b)=>PRIORITY_ORDER.indexOf(a.priority)-PRIORITY_ORDER.indexOf(b.priority));
   const done = sorted.filter(g=>g.done).length;
   const total = sorted.length;
 
@@ -1294,10 +1321,13 @@ function renderGoals() {
          </div>`
       : `<button class="goal-timer-btn" onclick="openGoalTimer('${g.id}')" title="Focus timer">⏱</button>`;
     const pClass = g.priority ? `priority-${g.priority}` : '';
+    const recurBadge = g.recurring
+      ? `<span class="goal-recur-badge">🔄 ${g.recurPeriod||'daily'}</span>`
+      : '';
     return `<div class="goal-item ${g.done?'done':''}" data-id="${g.id}">
       <button class="priority-dot ${pClass}" data-priority="${g.id}"></button>
       <button class="goal-check ${g.done?'done':''}" data-id="${g.id}"></button>
-      <div class="goal-text">${escHtml(g.text)}</div>
+      <div class="goal-text">${escHtml(g.text)}${recurBadge}</div>
       ${timerHtml}
       <button class="goal-del" data-del="${g.id}">×</button>
     </div>`;
@@ -2345,13 +2375,35 @@ document.getElementById('save-health-btn').onclick=()=>{
 document.getElementById('goal-add-btn').onclick = addGoal;
 document.getElementById('goal-input').addEventListener('keydown',e=>{ if(e.key==='Enter') addGoal(); });
 
+// Recurring toggle button
+document.getElementById('goal-recur-btn').addEventListener('click', ()=>{
+  const btn = document.getElementById('goal-recur-btn');
+  const chips = document.getElementById('goal-recur-chips');
+  const on = btn.classList.toggle('active');
+  chips.style.display = on ? 'flex' : 'none';
+});
+
+// Recurring period chips
+document.getElementById('goal-recur-chips').addEventListener('click', e=>{
+  const chip = e.target.closest('.recur-chip');
+  if (!chip) return;
+  document.querySelectorAll('.recur-chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');
+});
+
 function addGoal() {
   const input=document.getElementById('goal-input');
   const text=input.value.trim();
   if(!text) return;
-  const resetType=getActiveGroupResetType();
-  const dateKey=getPeriodKey(resetType);
-  S.goals.push({id:uid(),text,done:false,date:dateKey,groupId:_activeGoalGroup,priority:null});
+  const isRecur = document.getElementById('goal-recur-btn').classList.contains('active');
+  if (isRecur) {
+    const recurPeriod = document.querySelector('.recur-chip.active')?.dataset.recur || 'daily';
+    S.goals.push({id:uid(),text,recurring:true,recurPeriod,lastDoneKey:null,groupId:_activeGoalGroup,priority:null});
+  } else {
+    const resetType=getActiveGroupResetType();
+    const dateKey=getPeriodKey(resetType);
+    S.goals.push({id:uid(),text,done:false,date:dateKey,groupId:_activeGoalGroup,priority:null});
+  }
   input.value='';
   save(); renderGoals();
 }
@@ -2360,7 +2412,18 @@ document.getElementById('goal-list').addEventListener('click',e=>{
   const check=e.target.closest('.goal-check');
   const del=e.target.closest('[data-del]');
   const prio=e.target.closest('[data-priority]');
-  if(check){ const id=check.dataset.id; const g=S.goals.find(g=>g.id===id); if(g){g.done=!g.done; save(); renderGoals();} }
+  if(check){
+    const id=check.dataset.id; const g=S.goals.find(g=>g.id===id);
+    if(g){
+      if(g.recurring){
+        const rKey=getPeriodKey(g.recurPeriod||'daily');
+        g.lastDoneKey = (g.lastDoneKey===rKey) ? null : rKey; // toggle
+      } else {
+        g.done=!g.done;
+      }
+      save(); renderGoals();
+    }
+  }
   if(del){ S.goals=S.goals.filter(g=>g.id!==del.dataset.del); save(); renderGoals(); }
   if(prio){
     const id=prio.dataset.priority;
